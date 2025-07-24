@@ -1,4 +1,4 @@
-# Project Title
+# Project Title (Readme.md)
 Smart Alarm & Timer Web App (Natural + Traditional UI)
 
 # Goal
