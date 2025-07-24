@@ -1,0 +1,73 @@
+# Project Title
+Smart Alarm & Timer Web App (Natural + Traditional UI)
+
+# Goal
+Build a modern responsive alarm & timer web app that supports:
+- Natural language commands like: “Remind me to pay credit card bill every 2nd of the month at 6pm”
+- Traditional UI: dropdowns, calendar pickers, repeat options
+
+# Platform
+Responsive Web App (desktop + mobile view friendly)
+
+# Tech Stack
+- Frontend: React.js + Tailwind CSS
+- Time Parser: [chrono-node](https://www.npmjs.com/package/chrono-node) for natural language
+- State: React state or localStorage
+- Notifications: `Notification API` + optional sound alarm using Howler.js or native Audio
+
+# Features
+
+## 1. 🔤 Natural Language Input
+- Input like: "Alarm me to pay credit card bill every 2nd at 6pm"
+- Use `chrono-node` to extract date/time
+- Recurring rule parser for monthly, weekly, daily repetition (can hardcode simple patterns at first)
+- Preview parsed values before confirming
+
+## 2. 🧰 Traditional UI Controls
+- Task Title input
+- Date Picker (optional if natural language used)
+- Time Picker
+- Repeat Options:
+  - One-time
+  - Daily
+  - Weekly (pick days)
+  - Monthly (pick day of month like 2nd)
+- Sound/Notification toggle
+- Submit button to save alarm
+
+## 3. 📋 Alarm Management
+- Show list of active alarms
+- Countdown timer and next trigger time
+- Buttons: [⏹ Cancel], [✏️ Edit], [⏰ Snooze]
+- Auto-trigger and show modal with message + sound
+
+## 4. 🎨 UI/UX
+- Tailwind CSS with elegant, vibrant theme
+- Mobile-first layout with good spacing
+- Dark/light theme toggle
+- Icons: bell, clock, repeat
+- Animations for alarm trigger and confirmation
+
+# Bonus Features (Stretch)
+- Voice input (Web Speech API)
+- PWA support (Add to Home Screen)
+- Sync to calendar or export .ics file
+
+# Example User Stories
+1. User types: “Remind me to pay credit card bill every month on 2nd at 6pm”
+2. Parser shows: ✅ “Monthly on the 2nd at 6:00 PM”
+3. User confirms or adjusts via dropdown controls
+4. Alarm is set and shown in upcoming reminders
+
+# Output
+- React App with reusable components
+  - AlarmForm (with text input and traditional controls)
+  - AlarmList
+  - TimerCard
+  - Modal for alarm trigger
+- Tailwind CSS styling with grid/flex layout
+- Responsive view (mobile-first but looks great on desktop)
+
+# Notes
+- Use localStorage to persist alarms across refresh
+- Focus on user clarity: always preview the alarm summary before saving
