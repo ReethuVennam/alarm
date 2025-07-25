@@ -252,7 +252,7 @@ export function parseNaturalLanguage(input: string) {
     };
   }
   
-  // Parse absolute time - improved regex for voice input
+  // Parse absolute time - improved regex for voice input (matches with or without "at")
   const timeMatch = lowerInput.match(/(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.?m\.?|p\.?m\.?)?/i);
   
   console.log('Time parsing:', { 

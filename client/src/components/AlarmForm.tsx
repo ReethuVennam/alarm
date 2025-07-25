@@ -10,8 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-// Temporarily using localStorage version instead of API version
-import { useLocalStorageAlarms as useAlarms } from "@/hooks/useLocalStorageAlarms";
+import { useAlarms } from "@/hooks/useAlarms";
 import { parseNaturalLanguage } from "@/lib/alarmUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -76,12 +75,18 @@ export function AlarmForm() {
           }
           
           setParsedResult(parsed.summary);
+          
+          // Convert triggerTime to date and time strings for the form
+          const triggerTime = new Date(parsed.triggerTime);
+          const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+          const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
+          
           form.setValue("title", parsed.title);
           form.setValue("description", parsed.description || "");
-          form.setValue("date", parsed.date);
-          form.setValue("time", parsed.time);
+          form.setValue("date", dateString);
+          form.setValue("time", timeString);
           form.setValue("repeatType", parsed.repeatType);
-          form.setValue("repeatValue", parsed.repeatValue);
+          form.setValue("repeatValue", parsed.repeatValue || "");
           
           // Auto-submit the form after successful voice recognition
           toast({
@@ -184,12 +189,18 @@ export function AlarmForm() {
       }
       
       setParsedResult(parsed.summary);
+      
+      // Convert triggerTime to date and time strings for the form
+      const triggerTime = new Date(parsed.triggerTime);
+      const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
+      
       form.setValue("title", parsed.title);
       form.setValue("description", parsed.description || "");
-      form.setValue("date", parsed.date);
-      form.setValue("time", parsed.time);
+      form.setValue("date", dateString);
+      form.setValue("time", timeString);
       form.setValue("repeatType", parsed.repeatType);
-      form.setValue("repeatValue", parsed.repeatValue);
+      form.setValue("repeatValue", parsed.repeatValue || "");
     } else {
       toast({
         title: "Parse Error",
