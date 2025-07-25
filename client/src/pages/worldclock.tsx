@@ -4,12 +4,14 @@ import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout
 import { Button } from '@/components/ui/button';
 import { WorldClockCard, CompactWorldClockCard } from '@/components/features/worldclock/WorldClockCard';
 import { LocationSearch } from '@/components/features/worldclock/LocationSearch';
+import { MeetingPlanner } from '@/components/features/worldclock/MeetingPlanner';
 import { useWorldClock } from '@/hooks/useWorldClock';
 import { TimezoneInfo } from '@/utils/timezone';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function WorldClockPage() {
   const [isLocationSearchOpen, setIsLocationSearchOpen] = useState(false);
+  const [isMeetingPlannerOpen, setIsMeetingPlannerOpen] = useState(false);
   const {
     locations,
     userLocation,
@@ -186,27 +188,74 @@ export default function WorldClockPage() {
           <CardLayout
             title="Meeting Planner"
             description="Find optimal times for global meetings"
+            actions={
+              locations.length > 0 && (
+                <Button
+                  onClick={() => setIsMeetingPlannerOpen(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  size="sm"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Plan Meeting
+                </Button>
+              )
+            }
           >
-            <div className="text-center py-8 text-text-secondary">
-              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-blue-500" />
+            {locations.length > 0 ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  Schedule Across Time Zones
+                </h3>
+                <p className="text-text-secondary mb-6 max-w-sm mx-auto">
+                  Find the perfect meeting time that works for all {totalLocations + 1} locations with intelligent optimization
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Clock className="w-6 h-6 text-green-500" />
+                    </div>
+                    <div className="font-medium text-text-primary">Smart Scheduling</div>
+                    <div className="text-xs text-text-secondary">Business hours optimization</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Globe className="w-6 h-6 text-purple-500" />
+                    </div>
+                    <div className="font-medium text-text-primary">Global Coverage</div>
+                    <div className="text-xs text-text-secondary">{totalLocations + 1} time zones</div>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setIsMeetingPlannerOpen(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white mt-6"
+                >
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Plan Your Meeting
+                </Button>
               </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Coming Soon
-              </h3>
-              <p className="mb-4 max-w-sm mx-auto">
-                Schedule meetings across time zones with automatic optimization for business hours
-              </p>
-              <div className="text-sm text-text-secondary">
-                Features in development:
+            ) : (
+              <div className="text-center py-8 text-text-secondary">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  Add Locations First
+                </h3>
+                <p className="mb-4 max-w-sm mx-auto">
+                  Add team members' locations to start planning meetings across time zones
+                </p>
+                <Button
+                  onClick={() => setIsLocationSearchOpen(true)}
+                  variant="outline"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Team Locations
+                </Button>
               </div>
-              <div className="text-xs text-text-secondary mt-2 space-y-1">
-                <div>• Find optimal meeting times across multiple time zones</div>
-                <div>• Business hours consideration</div>
-                <div>• Calendar integration</div>
-                <div>• Meeting link generation</div>
-              </div>
-            </div>
+            )}
           </CardLayout>
         </div>
       </PageLayout>
@@ -217,6 +266,14 @@ export default function WorldClockPage() {
         onClose={() => setIsLocationSearchOpen(false)}
         onSelectLocation={handleAddLocation}
         existingTimezones={existingTimezones}
+      />
+
+      {/* Meeting Planner Modal */}
+      <MeetingPlanner
+        isOpen={isMeetingPlannerOpen}
+        onClose={() => setIsMeetingPlannerOpen(false)}
+        locations={locations}
+        userLocation={userLocation}
       />
     </AppLayout>
   );
