@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from '../server/storage';
+import { storage } from './_lib/storage';
 import { insertAlarmSchema } from '../shared/schema';
 import { z } from 'zod';
 
@@ -29,6 +29,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Environment validation
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL environment variable is missing');
+    return res.status(500).json({ 
+      message: "Server configuration error", 
+      requestId: `env_${Date.now()}` 
+    });
   }
 
   try {
