@@ -161,6 +161,8 @@ export class AlarmScheduler {
 export function parseNaturalLanguage(input: string) {
   const lowerInput = input.toLowerCase().trim();
   
+  console.log('Parsing natural language:', { original: input, normalized: lowerInput });
+  
   if (!lowerInput) {
     return null;
   }
@@ -179,15 +181,17 @@ export function parseNaturalLanguage(input: string) {
     };
   }
   
-  // Extract task title with better cleaning
+  // Extract task title with better cleaning for voice input
   const extractTaskTitle = (text: string): string => {
     const cleanedText = text
       .replace(/^(put\s+a\s+|set\s+a\s+|set\s+an\s+|create\s+a\s+)?(?:reminder|alarm|timer)\s+(for\s+)?/i, '')
       .replace(/\s+(to|for)\s+/i, ' ')
       .replace(/\s+in\s+\d+\s+(minute|minutes|hour|hours|day|days|week|weeks|month|months)/i, '')
       .replace(/\s+(next|this|upcoming)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|week|month)/i, '')
-      .replace(/\s+at\s+\d{1,2}(:\d{2})?\s*(am|pm)?/i, '')
+      .replace(/\s+at\s+\d{1,2}(:\d{2})?\s*(am|pm|a\.?m\.?|p\.?m\.?)?/i, '')
       .replace(/\s+every\s+(day|morning|evening|night|week|month)/i, '')
+      .replace(/\s+tomorrow\s*/i, '')
+      .replace(/\s+(today|tonight)\s*/i, '')
       .trim();
     
     if (cleanedText && !cleanedText.match(/^(alarm|timer|reminder)$/i)) {
@@ -248,15 +252,47 @@ export function parseNaturalLanguage(input: string) {
     };
   }
   
-  // Parse absolute time
-  const timeMatch = lowerInput.match(/(?:at\s+)?(\d{1,2}):?(\d{2})?\s*(am|pm)?/);
+  // Parse absolute time - improved regex for voice input
+  const timeMatch = lowerInput.match(/(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.?m\.?|p\.?m\.?)?/i);
+  
+  console.log('Time parsing:', { 
+    input: lowerInput,
+    timeMatch,
+    fullMatch: timeMatch ? timeMatch[0] : null,
+    hours: timeMatch ? timeMatch[1] : null,
+    minutes: timeMatch ? timeMatch[2] : null,
+    ampm: timeMatch ? timeMatch[3] : null
+  });
+  
   if (!timeMatch) {
+    console.log('No time match found, returning null');
     return null; // No time specified
   }
   
   let hours = parseInt(timeMatch[1]);
   const minutes = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-  const ampm = timeMatch[3];
+  const ampmRaw = timeMatch[3];
+  
+  // Normalize AM/PM from voice input (handles "p.m.", "pm", "PM", etc.)
+  let ampm = '';
+  if (ampmRaw) {
+    const cleaned = ampmRaw.toLowerCase().replace(/\./g, '');
+    if (cleaned === 'am' || cleaned === 'pm') {
+      ampm = cleaned;
+    }
+  }
+  
+  // Default to PM for common times if no AM/PM specified
+  if (!ampm && hours >= 1 && hours <= 11) {
+    // Assume PM for afternoon/evening hours if not specified
+    if (hours >= 3 && hours <= 11) {
+      ampm = 'pm';
+    } else {
+      ampm = 'am';
+    }
+  }
+  
+  console.log('Parsed time components:', { hours, minutes, ampm, ampmRaw });
   
   if (ampm === "pm" && hours !== 12) hours += 12;
   if (ampm === "am" && hours === 12) hours = 0;
@@ -316,7 +352,7 @@ export function parseNaturalLanguage(input: string) {
   // Set the time
   targetDate.setHours(hours, minutes, 0, 0);
   
-  return {
+  const result = {
     title,
     description: generateNotificationMessage(title),
     triggerTime: targetDate,
@@ -324,6 +360,14 @@ export function parseNaturalLanguage(input: string) {
     repeatValue: null,
     summary,
   };
+  
+  console.log('Final parsing result:', {
+    ...result,
+    triggerTime: result.triggerTime.toISOString(),
+    now: new Date().toISOString()
+  });
+  
+  return result;
 }
 
 // Utility functions
@@ -369,7 +413,15 @@ export function createSnoozeAlarm(originalAlarm: Alarm, snoozeMinutes: number = 
 export function validateAlarmTime(triggerTime: Date): { isValid: boolean; error?: string } {
   const now = new Date();
   
-  if (triggerTime <= now) {
+  // Add some buffer time (30 seconds) to account for processing delays
+  const bufferTime = new Date(now.getTime() + 30000);
+  
+  if (triggerTime <= bufferTime) {
+    console.warn('Alarm validation failed:', {
+      triggerTime: triggerTime.toISOString(),
+      now: now.toISOString(),
+      bufferTime: bufferTime.toISOString()
+    });
     return { isValid: false, error: "Alarm time must be in the future" };
   }
   
@@ -380,6 +432,11 @@ export function validateAlarmTime(triggerTime: Date): { isValid: boolean; error?
   if (triggerTime > oneYearFromNow) {
     return { isValid: false, error: "Alarm cannot be set more than 1 year in the future" };
   }
+  
+  console.log('Alarm validation passed:', {
+    triggerTime: triggerTime.toISOString(),
+    isValid: true
+  });
   
   return { isValid: true };
 }
