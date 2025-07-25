@@ -6,6 +6,7 @@ import { SkipLinks } from '../accessibility/FocusManager';
 import { ScreenReaderText } from '../accessibility/ScreenReaderText';
 import { SearchModal } from '../ui/SearchModal';
 import { useLocalStorageAlarms as useAlarms } from '@/hooks/useLocalStorageAlarms';
+import { useTimers } from '@/hooks/useTimers';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,11 +18,13 @@ interface AppLayoutProps {
  */
 export function AppLayout({ children, className = '' }: AppLayoutProps) {
   const { alarms } = useAlarms();
+  const { activeTimers } = useTimers();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
   // Count active alarms for header badge
   const activeAlarms = alarms.filter(alarm => alarm.isActive).length;
+  const activeTimerCount = activeTimers.length;
 
   const handleSearchClick = () => {
     setIsSearchOpen(true);
@@ -75,7 +78,7 @@ export function AppLayout({ children, className = '' }: AppLayoutProps) {
       {/* Bottom Tab Navigation */}
       <TabNavigation 
         activeAlarms={activeAlarms}
-        activeTimers={0} // TODO: Implement timer count
+        activeTimers={activeTimerCount}
       />
       
       {/* Search Modal */}

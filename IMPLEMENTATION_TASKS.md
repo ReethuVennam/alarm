@@ -31,20 +31,20 @@
 ### **Phase 2: New Features (Week 3-4)**
 
 #### Timer Feature
-- [ ] Create multiple simultaneous timer support
-- [ ] Design animated progress rings with colors
-- [ ] Add Pomodoro presets (25min work, 5min break)
-- [ ] Implement timer templates (Cooking, Workout, Study)
-- [ ] Add background notifications with custom sounds
+- [x] Create multiple simultaneous timer support
+- [x] Design animated progress rings with colors
+- [x] Add Pomodoro presets (25min work, 5min break)
+- [x] Implement timer templates (Cooking, Workout, Study)
+- [x] Add background notifications with custom sounds
 - [ ] Create timer export/share functionality
 
 #### Stopwatch Feature
-- [ ] Build main stopwatch display with precision (milliseconds)
-- [ ] Implement lap tracking with split times
-- [ ] Add multiple stopwatch support running simultaneously
-- [ ] Create color-coded sessions for different activities
-- [ ] Add export results to notes or share
-- [ ] Implement gesture controls (swipe, long-press)
+- [x] Build main stopwatch display with precision (milliseconds)
+- [x] Implement lap tracking with split times
+- [x] Add multiple stopwatch support running simultaneously
+- [x] Create color-coded sessions for different activities
+- [x] Add export results to notes or share (CSV export)
+- [x] Implement keyboard controls (Space, L, R)
 
 #### World Clock Feature
 - [ ] Create customizable timezone grid with search

@@ -1,115 +1,231 @@
-import React from 'react';
-import { Timer, Play, Pause, RotateCcw, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Timer, Plus, Activity, Clock, Pause, Play } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
+import { TimerCard, CompactTimerCard } from '@/components/features/timer/TimerCard';
+import { TimerCreationModal } from '@/components/features/timer/TimerCreationModal';
+import { useTimers, timerPresets } from '@/hooks/useTimers';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function TimerPage() {
+  const [isCreationModalOpen, setIsCreationModalOpen] = useState(false);
+  const {
+    timers,
+    activeTimers,
+    completedTimers,
+    pausedTimers,
+    createTimer,
+    createTimerFromPreset,
+    startTimer,
+    pauseTimer,
+    resetTimer,
+    deleteTimer,
+    addTime,
+  } = useTimers();
+
+  const handleQuickPreset = (preset: typeof timerPresets[0]) => {
+    const timer = createTimerFromPreset(preset);
+    startTimer(timer.id);
+  };
+
+  // Get the most recent active timer for main display
+  const mainTimer = activeTimers[0] || pausedTimers[0] || timers[0];
+
   return (
     <AppLayout>
       <PageLayout
         title="Timer"
         description="Focus timers and Pomodoro sessions"
         actions={
-          <Button className="bg-accent-primary hover:bg-accent-secondary text-white">
+          <Button 
+            onClick={() => setIsCreationModalOpen(true)}
+            className="bg-accent-primary hover:bg-accent-secondary text-white"
+          >
             <Plus className="w-4 h-4 mr-2" />
             New Timer
           </Button>
         }
       >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Main Timer */}
-          <CardLayout
-            title="Active Timer"
-            description="25:00 Pomodoro Session"
-            elevated
-            className="lg:col-span-2"
-          >
-            <div className="flex flex-col items-center justify-center py-12">
-              {/* Timer Display */}
-              <div className="relative w-64 h-64 mb-8">
-                <div className="absolute inset-0 rounded-full border-8 border-background-tertiary">
-                  {/* Progress ring would go here */}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl font-mono font-bold text-text-primary mb-2">
-                      25:00
+        <div className="space-y-6">
+          {/* Main Timer Display */}
+          {mainTimer && (
+            <CardLayout
+              title="Focus Timer"
+              description={mainTimer.isRunning ? "Currently running" : mainTimer.isPaused ? "Paused" : "Ready to start"}
+              elevated
+            >
+              <div className="flex justify-center">
+                <TimerCard
+                  timer={mainTimer}
+                  onStart={startTimer}
+                  onPause={pauseTimer}
+                  onReset={resetTimer}
+                  onDelete={deleteTimer}
+                  onAddTime={addTime}
+                  size="large"
+                />
+              </div>
+            </CardLayout>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Quick Presets */}
+            <CardLayout
+              title="Quick Presets"
+              description="Start popular timer types instantly"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                {timerPresets.slice(0, 6).map((preset) => (
+                  <motion.button
+                    key={preset.name}
+                    onClick={() => handleQuickPreset(preset)}
+                    className="p-4 text-left border border-border-color rounded-xl hover:border-accent-primary/30 transition-all focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: preset.color }}
+                      />
+                      <span className="font-medium text-text-primary text-sm">
+                        {preset.name}
+                      </span>
                     </div>
-                    <div className="text-text-secondary text-lg">
-                      Focus Time
+                    <div className="text-xs text-text-secondary">
+                      {preset.duration} minutes
                     </div>
+                  </motion.button>
+                ))}
+              </div>
+            </CardLayout>
+
+            {/* Timer Stats */}
+            <CardLayout
+              title="Timer Statistics"
+              description="Your timer activity overview"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Play className="w-6 h-6 text-accent-primary" />
                   </div>
+                  <div className="text-2xl font-bold text-text-primary">
+                    {activeTimers.length}
+                  </div>
+                  <div className="text-sm text-text-secondary">Active</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Pause className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-text-primary">
+                    {pausedTimers.length}
+                  </div>
+                  <div className="text-sm text-text-secondary">Paused</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Activity className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-text-primary">
+                    {completedTimers.length}
+                  </div>
+                  <div className="text-sm text-text-secondary">Completed</div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Timer className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <div className="text-2xl font-bold text-text-primary">
+                    {timers.length}
+                  </div>
+                  <div className="text-sm text-text-secondary">Total</div>
                 </div>
               </div>
-              
-              {/* Timer Controls */}
-              <div className="flex items-center space-x-4">
-                <Button
-                  size="lg"
-                  className="bg-accent-primary hover:bg-accent-secondary text-white rounded-full w-16 h-16"
-                >
-                  <Play className="w-6 h-6" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full w-12 h-12"
-                >
-                  <Pause className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="rounded-full w-12 h-12"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
+            </CardLayout>
+          </div>
+
+          {/* All Timers */}
+          {timers.length > 1 && (
+            <CardLayout
+              title="All Timers" 
+              description="Manage all your active and completed timers"
+            >
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {timers
+                    .filter(timer => timer.id !== mainTimer?.id)
+                    .map((timer) => (
+                      <motion.div
+                        key={timer.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CompactTimerCard
+                          timer={timer}
+                          onStart={startTimer}
+                          onPause={pauseTimer}
+                          onDelete={deleteTimer}
+                        />
+                      </motion.div>
+                    ))}
+                </AnimatePresence>
               </div>
-            </div>
-          </CardLayout>
-          
-          {/* Timer Presets */}
-          <CardLayout
-            title="Quick Presets"
-            description="Common timer durations"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { name: 'Pomodoro', duration: '25m', color: '#f59e0b' },
-                { name: 'Short Break', duration: '5m', color: '#10b981' },
-                { name: 'Long Break', duration: '15m', color: '#8b5cf6' },
-                { name: 'Deep Focus', duration: '90m', color: '#ef4444' },
-              ].map((preset) => (
-                <Button
-                  key={preset.name}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center hover:border-accent-primary"
-                  style={{ borderColor: preset.color + '20' }}
-                >
-                  <div 
-                    className="w-3 h-3 rounded-full mb-2"
-                    style={{ backgroundColor: preset.color }}
-                  />
-                  <div className="font-medium text-sm">{preset.name}</div>
-                  <div className="text-xs text-text-secondary">{preset.duration}</div>
-                </Button>
-              ))}
-            </div>
-          </CardLayout>
-          
-          {/* Active Timers */}
-          <CardLayout
-            title="Running Timers"
-            description="Multiple simultaneous timers"
-          >
-            <div className="text-center py-8 text-text-secondary">
-              <Timer className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No active timers</p>
-              <p className="text-sm mt-1">Start a timer to see it here</p>
-            </div>
-          </CardLayout>
+            </CardLayout>
+          )}
+
+          {/* Empty State */}
+          {timers.length === 0 && (
+            <CardLayout
+              title="No Timers Yet"
+              description="Create your first timer to get started"
+              elevated
+            >
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-accent-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Timer className="w-8 h-8 text-accent-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-text-primary mb-2">
+                  Ready to Focus?
+                </h3>
+                <p className="text-text-secondary mb-6 max-w-sm mx-auto">
+                  Create a timer to boost your productivity with focused work sessions
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={() => handleQuickPreset(timerPresets[0])}
+                    className="bg-accent-primary hover:bg-accent-secondary text-white"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Quick Pomodoro (25min)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreationModalOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Custom Timer
+                  </Button>
+                </div>
+              </div>
+            </CardLayout>
+          )}
         </div>
       </PageLayout>
+
+      {/* Timer Creation Modal */}
+      <TimerCreationModal
+        isOpen={isCreationModalOpen}
+        onClose={() => setIsCreationModalOpen(false)}
+        onCreateTimer={createTimer}
+        onCreateFromPreset={createTimerFromPreset}
+      />
     </AppLayout>
   );
 }
