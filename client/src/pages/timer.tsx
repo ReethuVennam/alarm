@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Timer, Plus, Activity, Clock, Pause, Play, Download } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
+import { PrimaryAnimatedButton, AnimatedButton } from '@/components/ui/AnimatedButton';
 import { TimerCard, CompactTimerCard } from '@/components/features/timer/TimerCard';
 import { TimerCreationModal } from '@/components/features/timer/TimerCreationModal';
 import { useTimers, timerPresets } from '@/hooks/useTimers';
 import { motion, AnimatePresence } from 'framer-motion';
 import { shareTimer, downloadTimerData, exportMultipleTimers } from '@/utils/timerExport';
 import { useScreenReaderAnnouncement } from '@/components/accessibility/ScreenReaderText';
+import { staggerAnimations } from '@/utils/animations';
 
 export default function TimerPage() {
   const [isCreationModalOpen, setIsCreationModalOpen] = useState(false);
@@ -75,13 +77,12 @@ export default function TimerPage() {
         title="Timer"
         description="Focus timers and Pomodoro sessions"
         actions={
-          <Button 
+          <PrimaryAnimatedButton 
             onClick={() => setIsCreationModalOpen(true)}
-            className="bg-accent-primary hover:bg-accent-secondary text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             New Timer
-          </Button>
+          </PrimaryAnimatedButton>
         }
       >
         <div className="space-y-6">
@@ -114,15 +115,23 @@ export default function TimerPage() {
               title="Quick Presets"
               description="Start popular timer types instantly"
             >
-              <div className="grid grid-cols-2 gap-3">
-                {timerPresets.slice(0, 6).map((preset) => (
-                  <motion.button
+              <motion.div 
+                className="grid grid-cols-2 gap-3"
+                variants={staggerAnimations.container}
+                initial="hidden"
+                animate="visible"
+              >
+                {timerPresets.slice(0, 6).map((preset, index) => (
+                  <motion.div
                     key={preset.name}
-                    onClick={() => handleQuickPreset(preset)}
-                    className="p-4 text-left border border-border-color rounded-xl hover:border-accent-primary/30 transition-all focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    variants={staggerAnimations.item}
                   >
+                    <AnimatedButton
+                      onClick={() => handleQuickPreset(preset)}
+                      className="w-full p-4 text-left border border-border-color rounded-xl hover:border-accent-primary/30 bg-background-secondary"
+                      scaleOnPress={true}
+                      rippleEffect={true}
+                    >
                     <div className="flex items-center space-x-3 mb-2">
                       <div
                         className="w-4 h-4 rounded-full"
@@ -132,12 +141,13 @@ export default function TimerPage() {
                         {preset.name}
                       </span>
                     </div>
-                    <div className="text-xs text-text-secondary">
-                      {preset.duration} minutes
-                    </div>
-                  </motion.button>
+                      <div className="text-xs text-text-secondary">
+                        {preset.duration} minutes
+                      </div>
+                    </AnimatedButton>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </CardLayout>
 
             {/* Timer Stats */}
@@ -196,24 +206,28 @@ export default function TimerPage() {
               description="Manage all your active and completed timers"
               actions={
                 <div className="flex space-x-2">
-                  <Button
+                  <AnimatedButton
                     variant="outline"
                     size="sm"
                     onClick={() => handleExportAllTimers('csv')}
                     className="text-xs"
+                    scaleOnPress={true}
+                    hapticFeedback={true}
                   >
                     <Download className="w-3 h-3 mr-1" />
                     CSV
-                  </Button>
-                  <Button
+                  </AnimatedButton>
+                  <AnimatedButton
                     variant="outline"
                     size="sm"
                     onClick={() => handleExportAllTimers('json')}
                     className="text-xs"
+                    scaleOnPress={true}
+                    hapticFeedback={true}
                   >
                     <Download className="w-3 h-3 mr-1" />
                     JSON
-                  </Button>
+                  </AnimatedButton>
                 </div>
               }
             >

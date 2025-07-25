@@ -4,7 +4,8 @@ import { TabNavigation } from './TabNavigation';
 import { MobileHeader } from './MobileHeader';
 import { SkipLinks } from '../accessibility/FocusManager';
 import { ScreenReaderText } from '../accessibility/ScreenReaderText';
-import { SearchModal } from '../ui/SearchModal';
+import { UniversalSearch } from '../features/search/UniversalSearch';
+import { PageTransition } from '../ui/PageTransition';
 import { useLocalStorageAlarms as useAlarms } from '@/hooks/useLocalStorageAlarms';
 import { useTimers } from '@/hooks/useTimers';
 
@@ -34,6 +35,37 @@ export function AppLayout({ children, className = '' }: AppLayoutProps) {
     setShowMenu(true);
   };
 
+  const handleSearchNavigate = (type: string, data: any) => {
+    // Navigate to the appropriate page based on search result type
+    // Since this is a React app without Next.js routing, we'll use window.location
+    const currentPath = window.location.pathname;
+    
+    switch (type) {
+      case 'timer':
+        if (currentPath !== '/timer') {
+          window.location.href = '/timer';
+        }
+        break;
+      case 'stopwatch':
+        if (currentPath !== '/stopwatch') {
+          window.location.href = '/stopwatch';
+        }
+        break;
+      case 'worldclock':
+        if (currentPath !== '/worldclock') {
+          window.location.href = '/worldclock';
+        }
+        break;
+      case 'alarm':
+        if (currentPath !== '/') {
+          window.location.href = '/';
+        }
+        break;
+      default:
+        console.log('Navigate to:', type, data);
+    }
+  };
+
   return (
     <div className={`min-h-screen bg-background-primary transition-colors duration-300 ${className}`}>
       {/* Skip Links for Accessibility */}
@@ -57,22 +89,14 @@ export function AppLayout({ children, className = '' }: AppLayoutProps) {
           Main content area. Use tab to navigate through alarm controls and settings.
         </ScreenReaderText>
         
-        {/* Page transition animation */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key="main-content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ 
-              duration: 0.2, 
-              ease: [0.4, 0, 0.2, 1] // Custom easing for smooth feel
-            }}
-            className="space-y-6"
-          >
-            {children}
-          </motion.div>
-        </AnimatePresence>
+        {/* Enhanced page transition animation */}
+        <PageTransition
+          transitionKey={typeof window !== 'undefined' ? window.location.pathname : 'default'}
+          variant="slideAndFade"
+          className="space-y-6"
+        >
+          {children}
+        </PageTransition>
       </main>
       
       {/* Bottom Tab Navigation */}
@@ -81,10 +105,11 @@ export function AppLayout({ children, className = '' }: AppLayoutProps) {
         activeTimers={activeTimerCount}
       />
       
-      {/* Search Modal */}
-      <SearchModal 
+      {/* Universal Search */}
+      <UniversalSearch 
         isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)} 
+        onClose={() => setIsSearchOpen(false)}
+        onNavigate={handleSearchNavigate}
       />
       
       {/* Global announcements for screen readers */}
