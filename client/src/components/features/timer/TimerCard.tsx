@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, RotateCcw, Trash2, Plus, Minus } from 'lucide-react';
+import { Play, Pause, RotateCcw, Trash2, Plus, Minus, Share, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TimerRing, MiniTimerRing } from '@/components/ui/TimerRing';
 import { Timer, formatDuration, getTimerProgress } from '@/hooks/useTimers';
@@ -13,6 +13,8 @@ interface TimerCardProps {
   onReset: (id: string) => void;
   onDelete: (id: string) => void;
   onAddTime: (id: string, minutes: number) => void;
+  onShare?: (timer: Timer) => void;
+  onExport?: (timer: Timer) => void;
   size?: 'small' | 'medium' | 'large';
   className?: string;
 }
@@ -24,6 +26,8 @@ export function TimerCard({
   onReset,
   onDelete,
   onAddTime,
+  onShare,
+  onExport,
   size = 'medium',
   className = ''
 }: TimerCardProps) {
@@ -206,6 +210,32 @@ export function TimerCard({
           >
             <RotateCcw className={sizeConfig.iconSize} />
           </Button>
+
+          {/* Share/Export buttons for larger sizes */}
+          {size !== 'small' && (
+            <>
+              {onShare && (
+                <Button
+                  variant="outline"
+                  onClick={() => onShare(timer)}
+                  className={`${sizeConfig.buttons} rounded-full`}
+                  aria-label="Share timer"
+                >
+                  <Share className={sizeConfig.iconSize} />
+                </Button>
+              )}
+              {onExport && (
+                <Button
+                  variant="outline"
+                  onClick={() => onExport(timer)}
+                  className={`${sizeConfig.buttons} rounded-full`}
+                  aria-label="Export timer data"
+                >
+                  <Download className={sizeConfig.iconSize} />
+                </Button>
+              )}
+            </>
+          )}
         </div>
 
         {/* Category badge */}
@@ -226,6 +256,8 @@ interface CompactTimerCardProps {
   onStart: (id: string) => void;
   onPause: (id: string) => void;
   onDelete: (id: string) => void;
+  onShare?: (timer: Timer) => void;
+  onExport?: (timer: Timer) => void;
   className?: string;
 }
 
@@ -234,6 +266,8 @@ export function CompactTimerCard({
   onStart,
   onPause,
   onDelete,
+  onShare,
+  onExport,
   className = ''
 }: CompactTimerCardProps) {
   const progress = getTimerProgress(timer);
@@ -283,6 +317,28 @@ export function CompactTimerCard({
             ) : (
               <Play className="w-3 h-3" />
             )}
+          </Button>
+        )}
+        {onShare && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onShare(timer)}
+            className="w-8 h-8 p-0 rounded-full hover:bg-background-tertiary"
+            aria-label="Share timer"
+          >
+            <Share className="w-3 h-3" />
+          </Button>
+        )}
+        {onExport && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onExport(timer)}
+            className="w-8 h-8 p-0 rounded-full hover:bg-background-tertiary"
+            aria-label="Export timer"
+          >
+            <Download className="w-3 h-3" />
           </Button>
         )}
         <Button
