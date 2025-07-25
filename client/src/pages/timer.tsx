@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Timer, Plus, Activity, Clock, Pause, Play } from 'lucide-react';
+import { Timer, Plus, Activity, Clock, Pause, Play, Download } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { TimerCard, CompactTimerCard } from '@/components/features/timer/TimerCard';
 import { TimerCreationModal } from '@/components/features/timer/TimerCreationModal';
 import { useTimers, timerPresets } from '@/hooks/useTimers';
 import { motion, AnimatePresence } from 'framer-motion';
+import { shareTimer, downloadTimerData, exportMultipleTimers } from '@/utils/timerExport';
+import { useScreenReaderAnnouncement } from '@/components/accessibility/ScreenReaderText';
 
 export default function TimerPage() {
   const [isCreationModalOpen, setIsCreationModalOpen] = useState(false);
+  const { announce } = useScreenReaderAnnouncement();
   const {
     timers,
     activeTimers,
@@ -26,6 +29,41 @@ export default function TimerPage() {
   const handleQuickPreset = (preset: typeof timerPresets[0]) => {
     const timer = createTimerFromPreset(preset);
     startTimer(timer.id);
+  };
+
+  const handleShareTimer = async (timer: any) => {
+    try {
+      await shareTimer(timer);
+      announce(`Timer "${timer.name}" shared successfully`, 'polite');
+    } catch (error) {
+      console.error('Share failed:', error);
+      announce('Failed to share timer', 'polite');
+    }
+  };
+
+  const handleExportTimer = (timer: any) => {
+    try {
+      downloadTimerData(timer, 'json');
+      announce(`Timer "${timer.name}" exported successfully`, 'polite');
+    } catch (error) {
+      console.error('Export failed:', error);
+      announce('Failed to export timer', 'polite');
+    }
+  };
+
+  const handleExportAllTimers = (format: 'json' | 'csv' = 'json') => {
+    if (timers.length === 0) {
+      announce('No timers to export', 'polite');
+      return;
+    }
+    
+    try {
+      exportMultipleTimers(timers, format);
+      announce(`All timers exported as ${format.toUpperCase()}`, 'polite');
+    } catch (error) {
+      console.error('Export failed:', error);
+      announce('Failed to export timers', 'polite');
+    }
   };
 
   // Get the most recent active timer for main display
@@ -62,6 +100,8 @@ export default function TimerPage() {
                   onReset={resetTimer}
                   onDelete={deleteTimer}
                   onAddTime={addTime}
+                  onShare={handleShareTimer}
+                  onExport={handleExportTimer}
                   size="large"
                 />
               </div>
@@ -154,6 +194,28 @@ export default function TimerPage() {
             <CardLayout
               title="All Timers" 
               description="Manage all your active and completed timers"
+              actions={
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExportAllTimers('csv')}
+                    className="text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    CSV
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleExportAllTimers('json')}
+                    className="text-xs"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    JSON
+                  </Button>
+                </div>
+              }
             >
               <div className="space-y-3">
                 <AnimatePresence>
@@ -172,6 +234,8 @@ export default function TimerPage() {
                           onStart={startTimer}
                           onPause={pauseTimer}
                           onDelete={deleteTimer}
+                          onShare={handleShareTimer}
+                          onExport={handleExportTimer}
                         />
                       </motion.div>
                     ))}
