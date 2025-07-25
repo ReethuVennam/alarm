@@ -1,5 +1,4 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from '../_lib/storage';
 import { insertAlarmSchema } from '../../shared/schema';
 import { z } from 'zod';
 
@@ -31,15 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  // Environment validation
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL environment variable is missing');
-    return res.status(500).json({ 
-      message: "Server configuration error", 
-      requestId: `env_${Date.now()}` 
-    });
-  }
-
   const { id } = req.query;
   const alarmId = parseInt(id as string);
 
@@ -50,39 +40,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     switch (req.method) {
       case 'GET':
-        // Get specific alarm
-        const alarm = await storage.getAlarmById(alarmId);
-        
-        if (!alarm) {
-          return res.status(404).json({ message: "Alarm not found" });
-        }
-        
-        return res.json(alarm);
+        // For localStorage mode, return 404 since client handles storage
+        return res.status(404).json({ message: "Use client-side localStorage" });
 
       case 'PATCH':
-        // Update alarm
+        // Validate update data and return success
         const updateData = {
           ...req.body,
           triggerTime: req.body.triggerTime ? new Date(req.body.triggerTime) : undefined
         };
         
         const validatedUpdateData = insertAlarmSchema.partial().parse(updateData);
-        const updatedAlarm = await storage.updateAlarm(alarmId, validatedUpdateData);
         
-        if (!updatedAlarm) {
-          return res.status(404).json({ message: "Alarm not found" });
-        }
+        // Return mock updated alarm - client will handle actual update
+        const mockUpdatedAlarm = {
+          id: alarmId,
+          ...validatedUpdateData,
+          updatedAt: new Date()
+        };
         
-        return res.json(updatedAlarm);
+        return res.json(mockUpdatedAlarm);
 
       case 'DELETE':
-        // Delete alarm
-        const success = await storage.deleteAlarm(alarmId);
-        
-        if (!success) {
-          return res.status(404).json({ message: "Alarm not found" });
-        }
-        
+        // Return success - client will handle actual deletion
         return res.status(204).end();
 
       default:

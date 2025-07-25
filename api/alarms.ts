@@ -1,5 +1,4 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { storage } from './_lib/storage';
 import { insertAlarmSchema } from '../shared/schema';
 import { z } from 'zod';
 
@@ -31,52 +30,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  // Environment validation
-  if (!process.env.DATABASE_URL) {
-    console.error('DATABASE_URL environment variable is missing');
-    return res.status(500).json({ 
-      message: "Server configuration error", 
-      requestId: `env_${Date.now()}` 
-    });
-  }
-
   try {
     switch (req.method) {
       case 'GET':
-        if (req.query.id) {
-          // Get specific alarm
-          const id = parseInt(req.query.id as string);
-          const alarm = await storage.getAlarmById(id);
-          
-          if (!alarm) {
-            return res.status(404).json({ message: "Alarm not found" });
-          }
-          
-          return res.json(alarm);
-        } else {
-          // Get all alarms
-          const alarms = await storage.getAlarms();
-          return res.json(alarms);
-        }
+        // For localStorage mode, return empty array
+        // Client will handle data loading from localStorage
+        return res.json([]);
 
       case 'POST':
-        // Create new alarm
+        // Validate the alarm data
         const requestData = {
           ...req.body,
           triggerTime: req.body.triggerTime ? new Date(req.body.triggerTime) : undefined
         };
         
         const validatedData = insertAlarmSchema.parse(requestData);
-        const alarm = await storage.createAlarm(validatedData);
-        return res.status(201).json(alarm);
-
-      case 'PATCH':
-        // Update alarm - this should be handled by [id].ts for proper RESTful routing
-        return res.status(405).json({ message: "Use PATCH /api/alarms/{id} for updates" });
-
-      case 'DELETE':
-        // Delete alarm - this should be handled by [id].ts for proper RESTful routing
-        return res.status(405).json({ message: "Use DELETE /api/alarms/{id} for deletion" });
+        
+        // Return the validated data with a generated ID
+        // Client will handle actual storage in localStorage
+        const mockAlarm = {
+          ...validatedData,
+          id: Date.now(), // Simple ID generation
+          description: validatedData.description || null,
+          repeatType: validatedData.repeatType || "none",
+          repeatValue: validatedData.repeatValue || null,
+          soundEnabled: validatedData.soundEnabled ?? true,
+          isActive: validatedData.isActive ?? true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        console.log('Mock alarm response:', mockAlarm);
+        return res.status(201).json(mockAlarm);
 
       default:
         res.setHeader('Allow', ['GET', 'POST']);
