@@ -11,6 +11,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        // Original theme colors
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
@@ -44,6 +45,17 @@ export default {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
+        
+        // GenZ Theme System
+        'background-primary': 'var(--background-primary, #ffffff)',
+        'background-secondary': 'var(--background-secondary, #f8fafc)',
+        'background-tertiary': 'var(--background-tertiary, #e2e8f0)',
+        'text-primary': 'var(--text-primary, #0f172a)',
+        'text-secondary': 'var(--text-secondary, #475569)',
+        'border-color': 'var(--border-color, #e2e8f0)',
+        'accent-primary': 'var(--accent-primary, #00ff88)',
+        'accent-secondary': 'var(--accent-secondary, #00cc6a)',
+        'accent-gradient': 'var(--accent-gradient)',
         chart: {
           "1": "var(--chart-1)",
           "2": "var(--chart-2)",
@@ -79,10 +91,63 @@ export default {
             height: "0",
           },
         },
+        // GenZ-inspired animations
+        "glow-pulse": {
+          "0%, 100%": {
+            boxShadow: "0 0 20px var(--accent-primary)",
+            transform: "scale(1)",
+          },
+          "50%": {
+            boxShadow: "0 0 40px var(--accent-primary), 0 0 60px var(--accent-primary)",
+            transform: "scale(1.02)",
+          },
+        },
+        "slide-in-up": {
+          from: {
+            transform: "translateY(100%)",
+            opacity: "0",
+          },
+          to: {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+        "slide-in-down": {
+          from: {
+            transform: "translateY(-100%)",
+            opacity: "0",
+          },
+          to: {
+            transform: "translateY(0)",
+            opacity: "1",
+          },
+        },
+        "bounce-gentle": {
+          "0%, 100%": {
+            transform: "translateY(0)",
+          },
+          "50%": {
+            transform: "translateY(-4px)",
+          },
+        },
+        "gradient-shift": {
+          "0%, 100%": {
+            backgroundPosition: "0% 50%",
+          },
+          "50%": {
+            backgroundPosition: "100% 50%",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        // GenZ animations
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
+        "slide-in-up": "slide-in-up 0.3s ease-out",
+        "slide-in-down": "slide-in-down 0.3s ease-out",
+        "bounce-gentle": "bounce-gentle 2s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 3s ease-in-out infinite",
       },
     },
   },

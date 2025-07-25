@@ -6,6 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Home from "@/pages/home";
+import Timer from "@/pages/timer";
+import Stopwatch from "@/pages/stopwatch";
+import WorldClock from "@/pages/worldclock";
+import Settings from "@/pages/settings";
 import QRCode from "@/pages/qr-code";
 import TestAlarms from "@/pages/test-alarms";
 import NotFound from "@/pages/not-found";
@@ -16,6 +20,31 @@ function Router() {
       <Route path="/" component={() => (
         <ErrorBoundary>
           <Home />
+        </ErrorBoundary>
+      )} />
+      <Route path="/home" component={() => (
+        <ErrorBoundary>
+          <Home />
+        </ErrorBoundary>
+      )} />
+      <Route path="/timer" component={() => (
+        <ErrorBoundary>
+          <Timer />
+        </ErrorBoundary>
+      )} />
+      <Route path="/stopwatch" component={() => (
+        <ErrorBoundary>
+          <Stopwatch />
+        </ErrorBoundary>
+      )} />
+      <Route path="/worldclock" component={() => (
+        <ErrorBoundary>
+          <WorldClock />
+        </ErrorBoundary>
+      )} />
+      <Route path="/settings" component={() => (
+        <ErrorBoundary>
+          <Settings />
         </ErrorBoundary>
       )} />
       <Route path="/qr" component={() => (
