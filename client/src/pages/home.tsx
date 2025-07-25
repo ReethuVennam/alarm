@@ -3,7 +3,8 @@ import { AlarmList } from "@/components/AlarmList";
 import { AlarmModal } from "@/components/AlarmModal";
 import { DoNotDisturb } from "@/components/DoNotDisturb";
 import { useTheme } from "@/hooks/useTheme";
-import { useAlarms } from "@/hooks/useAlarms";
+// Temporarily using localStorage version instead of API version
+import { useLocalStorageAlarms as useAlarms } from "@/hooks/useLocalStorageAlarms";
 import { Bell, Moon, Sun, QrCode } from "lucide-react";
 import { Link } from "wouter";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

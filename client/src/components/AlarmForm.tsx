@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useAlarms } from "@/hooks/useAlarms";
+// Temporarily using localStorage version instead of API version
+import { useLocalStorageAlarms as useAlarms } from "@/hooks/useLocalStorageAlarms";
 import { parseNaturalLanguage } from "@/lib/alarmUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
