@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Globe, Plus, Sun, Moon, Calendar, Users, MapPin, Clock } from 'lucide-react';
+import { Globe, Plus, Sun, Moon, MapPin, Settings, Timer, Clock } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { WorldClockCard, CompactWorldClockCard } from '@/components/features/worldclock/WorldClockCard';
 import { LocationSearch } from '@/components/features/worldclock/LocationSearch';
-import { MeetingPlanner } from '@/components/features/worldclock/MeetingPlanner';
+import { TimeConverter } from '@/components/features/worldclock/TimeConverter';
+import { WorldClockSettings, useWorldClockPreferences } from '@/components/features/worldclock/WorldClockSettings';
 import { useWorldClock } from '@/hooks/useWorldClock';
-import { TimezoneInfo } from '@/utils/timezone';
+import { TimezoneInfo, formatTimeInTimezone } from '@/utils/timezone';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function WorldClockPage() {
   const [isLocationSearchOpen, setIsLocationSearchOpen] = useState(false);
-  const [isMeetingPlannerOpen, setIsMeetingPlannerOpen] = useState(false);
+  const [isTimeConverterOpen, setIsTimeConverterOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
+  const { preferences, setPreferences } = useWorldClockPreferences();
   const {
     locations,
     userLocation,
@@ -20,7 +24,9 @@ export default function WorldClockPage() {
     daytimeCount,
     addLocation,
     removeLocation,
-  } = useWorldClock();
+    updateLocationNickname,
+    resetToDefaults,
+  } = useWorldClock(preferences);
 
   const handleAddLocation = (timezoneInfo: TimezoneInfo) => {
     addLocation(timezoneInfo);
@@ -34,13 +40,30 @@ export default function WorldClockPage() {
         title="World Clock"
         description="Track time across different time zones"
         actions={
-          <Button 
-            onClick={() => setIsLocationSearchOpen(true)}
-            className="bg-accent-primary hover:bg-accent-secondary text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Location
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline"
+              onClick={() => setIsTimeConverterOpen(true)}
+              className="hidden sm:flex"
+            >
+              <Timer className="w-4 h-4 mr-2" />
+              Convert Time
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+            <Button 
+              onClick={() => setIsLocationSearchOpen(true)}
+              className="bg-accent-primary hover:bg-accent-secondary text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Location
+            </Button>
+          </div>
         }
       >
         <div className="space-y-6">
@@ -49,12 +72,21 @@ export default function WorldClockPage() {
             title="Your Local Time"
             description="Current time in your timezone"
             elevated
+            actions={
+              preferences.showUTCTime && (
+                <div className="text-sm text-text-secondary">
+                  UTC: {formatTimeInTimezone('UTC', preferences.timeFormat === '12h' ? 'h:mm a' : 'HH:mm')}
+                </div>
+              )
+            }
           >
             <div className="flex justify-center">
               <WorldClockCard
                 location={userLocation}
                 size="large"
                 showControls={false}
+                showEnhancedInfo={preferences.showEnhancedInfo}
+                timeFormat={preferences.timeFormat}
               />
             </div>
           </CardLayout>
@@ -107,8 +139,23 @@ export default function WorldClockPage() {
             <CardLayout
               title="World Locations"
               description="Your saved timezone locations"
+              actions={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsTimeConverterOpen(true)}
+                  className="sm:hidden"
+                >
+                  <Timer className="w-4 h-4 mr-2" />
+                  Convert
+                </Button>
+              }
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className={`grid gap-6 ${
+                preferences.compactView 
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6' 
+                  : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+              }`}>
                 <AnimatePresence>
                   {locations.map((location) => (
                     <motion.div
@@ -121,7 +168,10 @@ export default function WorldClockPage() {
                       <WorldClockCard
                         location={location}
                         onRemove={removeLocation}
-                        size="medium"
+                        onNicknameUpdate={updateLocationNickname}
+                        size={preferences.compactView ? "small" : "medium"}
+                        showEnhancedInfo={preferences.showEnhancedInfo}
+                        timeFormat={preferences.timeFormat}
                       />
                     </motion.div>
                   ))}
@@ -184,79 +234,6 @@ export default function WorldClockPage() {
             </CardLayout>
           )}
 
-          {/* Meeting Planner */}
-          <CardLayout
-            title="Meeting Planner"
-            description="Find optimal times for global meetings"
-            actions={
-              locations.length > 0 && (
-                <Button
-                  onClick={() => setIsMeetingPlannerOpen(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  size="sm"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Plan Meeting
-                </Button>
-              )
-            }
-          >
-            {locations.length > 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-blue-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                  Schedule Across Time Zones
-                </h3>
-                <p className="text-text-secondary mb-6 max-w-sm mx-auto">
-                  Find the perfect meeting time that works for all {totalLocations + 1} locations with intelligent optimization
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Clock className="w-6 h-6 text-green-500" />
-                    </div>
-                    <div className="font-medium text-text-primary">Smart Scheduling</div>
-                    <div className="text-xs text-text-secondary">Business hours optimization</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Globe className="w-6 h-6 text-purple-500" />
-                    </div>
-                    <div className="font-medium text-text-primary">Global Coverage</div>
-                    <div className="text-xs text-text-secondary">{totalLocations + 1} time zones</div>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => setIsMeetingPlannerOpen(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white mt-6"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Plan Your Meeting
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-text-secondary">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8 text-blue-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-text-primary mb-2">
-                  Add Locations First
-                </h3>
-                <p className="mb-4 max-w-sm mx-auto">
-                  Add team members' locations to start planning meetings across time zones
-                </p>
-                <Button
-                  onClick={() => setIsLocationSearchOpen(true)}
-                  variant="outline"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Team Locations
-                </Button>
-              </div>
-            )}
-          </CardLayout>
         </div>
       </PageLayout>
 
@@ -268,12 +245,20 @@ export default function WorldClockPage() {
         existingTimezones={existingTimezones}
       />
 
-      {/* Meeting Planner Modal */}
-      <MeetingPlanner
-        isOpen={isMeetingPlannerOpen}
-        onClose={() => setIsMeetingPlannerOpen(false)}
-        locations={locations}
-        userLocation={userLocation}
+      {/* Time Converter Modal */}
+      <TimeConverter
+        isOpen={isTimeConverterOpen}
+        onClose={() => setIsTimeConverterOpen(false)}
+        initialLocations={locations.map(loc => loc.timezoneInfo)}
+      />
+
+      {/* Settings Modal */}
+      <WorldClockSettings
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        preferences={preferences}
+        onPreferencesChange={setPreferences}
+        onResetToDefaults={resetToDefaults}
       />
     </AppLayout>
   );

@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sun, Moon, Briefcase, Coffee, Home, Calendar, X, Edit2 } from 'lucide-react';
+import { Sun, Moon, Briefcase, Coffee, Home, Calendar, X, Edit2, Sunrise, Sunset, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { WorldClockData } from '@/hooks/useWorldClock';
 import { ScreenReaderText } from '@/components/accessibility/ScreenReaderText';
+import { 
+  getSunriseSunset, 
+  getTimezoneAbbreviation, 
+  formatTimeWithOptions,
+  isWeekend 
+} from '@/utils/timezone';
 
 interface WorldClockCardProps {
   location: WorldClockData;
   onRemove?: (id: string) => void;
   onEdit?: (id: string) => void;
+  onNicknameUpdate?: (id: string, nickname: string) => void;
   size?: 'small' | 'medium' | 'large';
   showControls?: boolean;
+  showEnhancedInfo?: boolean;
+  timeFormat?: '12h' | '24h';
   className?: string;
 }
 
@@ -18,10 +28,15 @@ export function WorldClockCard({
   location,
   onRemove,
   onEdit,
+  onNicknameUpdate,
   size = 'medium',
   showControls = true,
+  showEnhancedInfo = false,
+  timeFormat = '24h',
   className = ''
 }: WorldClockCardProps) {
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [nicknameValue, setNicknameValue] = useState(location.nickname || location.timezoneInfo.city);
   const sizeClasses = {
     small: 'p-4',
     medium: 'p-6',
@@ -79,6 +94,31 @@ export function WorldClockCard({
         return location.isDaytime ? 'Daytime' : 'Nighttime';
     }
   };
+
+  const handleNicknameSubmit = () => {
+    if (onNicknameUpdate && nicknameValue.trim() !== (location.nickname || location.timezoneInfo.city)) {
+      onNicknameUpdate(location.id, nicknameValue.trim());
+    }
+    setIsEditingNickname(false);
+  };
+
+  const handleNicknameKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleNicknameSubmit();
+    } else if (e.key === 'Escape') {
+      setNicknameValue(location.nickname || location.timezoneInfo.city);
+      setIsEditingNickname(false);
+    }
+  };
+
+  // Enhanced info calculations
+  const sunriseSunset = showEnhancedInfo ? getSunriseSunset(location.timezoneInfo.timezone) : null;
+  const timezoneAbbr = showEnhancedInfo ? getTimezoneAbbreviation(location.timezoneInfo.timezone) : null;
+  const isWeekendDay = showEnhancedInfo ? isWeekend(location.timezoneInfo.timezone) : false;
+  const formattedTime = formatTimeWithOptions(location.timezoneInfo.timezone, {
+    format: timeFormat,
+    showSeconds: size === 'large'
+  });
 
   return (
     <motion.div
@@ -149,24 +189,65 @@ export function WorldClockCard({
 
         {/* Location Name */}
         <div className="mb-4">
-          <h3 className={`font-bold text-text-primary ${textSizes[size].location}`}>
-            {location.nickname || location.timezoneInfo.city}
-          </h3>
-          <p className={`text-text-secondary ${textSizes[size].date}`}>
-            {location.timezoneInfo.country}
-          </p>
+          {isEditingNickname ? (
+            <Input
+              value={nicknameValue}
+              onChange={(e) => setNicknameValue(e.target.value)}
+              onBlur={handleNicknameSubmit}
+              onKeyDown={handleNicknameKeyPress}
+              className={`font-bold bg-transparent border-0 shadow-none p-0 ${textSizes[size].location}`}
+              autoFocus
+            />
+          ) : (
+            <h3 
+              className={`font-bold text-text-primary ${textSizes[size].location} ${onNicknameUpdate ? 'cursor-pointer hover:text-accent-primary' : ''}`}
+              onClick={() => onNicknameUpdate && setIsEditingNickname(true)}
+              title={onNicknameUpdate ? "Click to edit nickname" : undefined}
+            >
+              {location.nickname || location.timezoneInfo.city}
+            </h3>
+          )}
+          <div className="flex items-center space-x-2">
+            <p className={`text-text-secondary ${textSizes[size].date}`}>
+              {location.timezoneInfo.country}
+            </p>
+            {isWeekendDay && (
+              <span className="text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                Weekend
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Time Display */}
         <div className="mb-4">
           <div className={`font-mono font-bold text-text-primary ${textSizes[size].time}`}>
-            {location.formattedTime}
+            {formattedTime}
           </div>
           <div className={`text-text-secondary flex items-center space-x-2 ${textSizes[size].date}`}>
             <Calendar className="w-3 h-3" />
             <span>{location.formattedDate}</span>
+            {timezoneAbbr && (
+              <span className="text-xs bg-background-tertiary px-2 py-1 rounded">
+                {timezoneAbbr}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Enhanced Info */}
+        {showEnhancedInfo && sunriseSunset && (
+          <div className="mb-4 grid grid-cols-2 gap-3 text-xs">
+            <div className="flex items-center space-x-2 text-orange-600 dark:text-orange-400">
+              <Sunrise className="w-3 h-3" />
+              <span>{sunriseSunset.sunrise.toTimeString().slice(0, 5)}</span>
+            </div>
+            <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400">
+              <Sunset className="w-3 h-3" />
+              <span>{sunriseSunset.sunset.toTimeString().slice(0, 5)}</span>
+            </div>
+          </div>
+        )}
 
         {/* Timezone Info */}
         <div className="text-xs text-text-secondary">

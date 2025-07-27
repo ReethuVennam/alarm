@@ -6,10 +6,12 @@ import {
   getDefaultCities, 
   getCurrentTimeInTimezone,
   formatTimeInTimezone,
+  formatTimeWithOptions,
   isDaytime,
   getBusinessHoursStatus,
   formatRelativeTime
 } from '@/utils/timezone';
+import { WorldClockPreferences } from '@/components/features/worldclock/WorldClockSettings';
 
 export interface WorldClockData extends WorldClockLocation {
   currentTime: Date;
@@ -20,7 +22,7 @@ export interface WorldClockData extends WorldClockLocation {
   relativeTime: string;
 }
 
-export function useWorldClock() {
+export function useWorldClock(preferences?: WorldClockPreferences) {
   const [locations, setLocations] = useState<WorldClockLocation[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { announce } = useScreenReaderAnnouncement();
@@ -52,14 +54,17 @@ export function useWorldClock() {
     localStorage.setItem('smart-alarm-worldclock-locations', JSON.stringify(locations));
   }, [locations]);
 
-  // Update current time every second
+  // Update current time based on preferences
   useEffect(() => {
+    if (!preferences?.autoRefresh) return;
+    
+    const intervalMs = (preferences?.refreshInterval || 1) * 1000;
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, intervalMs);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [preferences?.autoRefresh, preferences?.refreshInterval]);
 
   const loadDefaultCities = useCallback(() => {
     const defaultCities = getDefaultCities();
@@ -128,16 +133,30 @@ export function useWorldClock() {
     const timezone = location.timezoneInfo.timezone;
     const currentTimeInZone = getCurrentTimeInTimezone(timezone);
     
+    // Use preferences for formatting if available
+    const timeFormat = preferences?.timeFormat || '24h';
+    const showSeconds = preferences?.showSeconds || false;
+    const dateFormat = preferences?.dateFormat || 'medium';
+    
+    const dateFormats = {
+      short: 'MMM dd',
+      medium: 'MMM dd, yyyy',
+      long: 'EEEE, MMMM dd, yyyy'
+    };
+    
     return {
       ...location,
       currentTime: currentTimeInZone,
-      formattedTime: formatTimeInTimezone(timezone, 'HH:mm'),
-      formattedDate: formatTimeInTimezone(timezone, 'MMM dd, yyyy'),
+      formattedTime: formatTimeWithOptions(timezone, {
+        format: timeFormat,
+        showSeconds
+      }),
+      formattedDate: formatTimeInTimezone(timezone, dateFormats[dateFormat]),
       isDaytime: isDaytime(timezone),
       businessStatus: getBusinessHoursStatus(timezone),
       relativeTime: formatRelativeTime(timezone),
     };
-  }, []);
+  }, [preferences?.timeFormat, preferences?.showSeconds, preferences?.dateFormat]);
 
   // Get all locations with enhanced data
   const locationData = locations.map(getLocationData);
