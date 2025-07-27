@@ -258,65 +258,156 @@ export interface WorldClockLocation {
   nickname?: string;
 }
 
-// Utility functions
+// Utility functions with robust error handling
 export function getCurrentTimeInTimezone(timezone: string): Date {
-  return toZonedTime(new Date(), timezone);
+  try {
+    if (!timezone || typeof timezone !== 'string') {
+      throw new Error('Invalid timezone provided');
+    }
+    return toZonedTime(new Date(), timezone);
+  } catch (error) {
+    console.error(`Error getting current time for timezone "${timezone}":`, error);
+    // Fallback to local time
+    return new Date();
+  }
 }
 
 export function formatTimeInTimezone(timezone: string, formatStr: string = 'HH:mm'): string {
-  const zonedTime = getCurrentTimeInTimezone(timezone);
-  return format(zonedTime, formatStr, { timeZone: timezone });
+  try {
+    if (!timezone || typeof timezone !== 'string') {
+      throw new Error('Invalid timezone provided');
+    }
+    if (!formatStr || typeof formatStr !== 'string') {
+      formatStr = 'HH:mm';
+    }
+    
+    const zonedTime = getCurrentTimeInTimezone(timezone);
+    return format(zonedTime, formatStr);
+  } catch (error) {
+    console.error(`Error formatting time for timezone "${timezone}":`, error);
+    // Fallback to current local time
+    try {
+      return format(new Date(), formatStr);
+    } catch (formatError) {
+      console.error('Error with format string:', formatError);
+      return new Date().toLocaleTimeString();
+    }
+  }
 }
 
 export function getTimezoneOffset(timezone: string): string {
-  const now = new Date();
-  const zonedTime = toZonedTime(now, timezone);
-  const offset = (zonedTime.getTime() - now.getTime()) / (1000 * 60 * 60);
-  
-  const sign = offset >= 0 ? '+' : '-';
-  const hours = Math.floor(Math.abs(offset));
-  const minutes = Math.round((Math.abs(offset) - hours) * 60);
-  
-  if (minutes === 0) {
-    return `GMT${sign}${hours}`;
+  try {
+    if (!timezone || typeof timezone !== 'string') {
+      return 'GMT+0';
+    }
+
+    const now = new Date();
+    
+    // Use Intl.DateTimeFormat to get accurate offset including DST
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'longOffset'
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find(part => part.type === 'timeZoneName');
+    
+    if (offsetPart?.value && offsetPart.value.startsWith('GMT')) {
+      return offsetPart.value;
+    }
+    
+    // Fallback calculation
+    const utc = new Date(now.toISOString());
+    const local = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+    const diff = (local.getTime() - utc.getTime()) / (1000 * 60 * 60);
+    
+    const sign = diff >= 0 ? '+' : '-';
+    const hours = Math.floor(Math.abs(diff));
+    const minutes = Math.round((Math.abs(diff) - hours) * 60);
+    
+    if (minutes === 0) {
+      return `GMT${sign}${hours}`;
+    }
+    return `GMT${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
+  } catch (error) {
+    console.error(`Error getting timezone offset for "${timezone}":`, error);
+    return 'GMT+0';
   }
-  return `GMT${sign}${hours}:${minutes.toString().padStart(2, '0')}`;
 }
 
 export function isDaytime(timezone: string): boolean {
-  const time = getCurrentTimeInTimezone(timezone);
-  const hour = time.getHours();
-  return hour >= 6 && hour < 18; // 6 AM to 6 PM is considered daytime
+  try {
+    if (!timezone || typeof timezone !== 'string') {
+      // Fallback to local time
+      const hour = new Date().getHours();
+      return hour >= 6 && hour < 18;
+    }
+    
+    const time = getCurrentTimeInTimezone(timezone);
+    const hour = time.getHours();
+    return hour >= 6 && hour < 18; // 6 AM to 6 PM is considered daytime
+  } catch (error) {
+    console.error(`Error checking daytime for timezone "${timezone}":`, error);
+    // Safe fallback
+    const hour = new Date().getHours();
+    return hour >= 6 && hour < 18;
+  }
 }
 
 export function searchCities(query: string): TimezoneInfo[] {
-  if (!query.trim()) return [];
-  
-  const searchTerm = query.toLowerCase().trim();
-  
-  return worldCities.filter(city => {
-    const cityMatch = city.city.toLowerCase().includes(searchTerm);
-    const countryMatch = city.country.toLowerCase().includes(searchTerm);
-    const timezoneMatch = city.timezone.toLowerCase().includes(searchTerm);
-    const aliasMatch = city.aliases?.some(alias => 
-      alias.toLowerCase().includes(searchTerm)
-    ) || false;
+  try {
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      return [];
+    }
     
-    return cityMatch || countryMatch || timezoneMatch || aliasMatch;
-  }).sort((a, b) => {
-    // Prioritize exact matches and capitals
-    const aExact = a.city.toLowerCase() === searchTerm || a.country.toLowerCase() === searchTerm;
-    const bExact = b.city.toLowerCase() === searchTerm || b.country.toLowerCase() === searchTerm;
+    const searchTerm = query.toLowerCase().trim();
     
-    if (aExact && !bExact) return -1;
-    if (!aExact && bExact) return 1;
+    // Validate search term length to prevent performance issues
+    if (searchTerm.length > 100) {
+      console.warn('Search term too long, truncating');
+      return [];
+    }
     
-    if (a.isCapital && !b.isCapital) return -1;
-    if (!a.isCapital && b.isCapital) return 1;
+    const results = worldCities.filter(city => {
+      try {
+        const cityMatch = city.city?.toLowerCase().includes(searchTerm) || false;
+        const countryMatch = city.country?.toLowerCase().includes(searchTerm) || false;
+        const timezoneMatch = city.timezone?.toLowerCase().includes(searchTerm) || false;
+        const aliasMatch = city.aliases?.some(alias => 
+          alias?.toLowerCase().includes(searchTerm)
+        ) || false;
+        
+        return cityMatch || countryMatch || timezoneMatch || aliasMatch;
+      } catch (filterError) {
+        console.error('Error filtering city:', city, filterError);
+        return false;
+      }
+    }).sort((a, b) => {
+      try {
+        // Prioritize exact matches and capitals
+        const aExact = a.city?.toLowerCase() === searchTerm || a.country?.toLowerCase() === searchTerm;
+        const bExact = b.city?.toLowerCase() === searchTerm || b.country?.toLowerCase() === searchTerm;
+        
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        
+        if (a.isCapital && !b.isCapital) return -1;
+        if (!a.isCapital && b.isCapital) return 1;
+        
+        // Sort by population (larger cities first)
+        return (b.population || 0) - (a.population || 0);
+      } catch (sortError) {
+        console.error('Error sorting cities:', sortError);
+        return 0;
+      }
+    });
     
-    // Sort by population (larger cities first)
-    return (b.population || 0) - (a.population || 0);
-  });
+    // Limit results to prevent UI performance issues
+    return results.slice(0, 50);
+  } catch (error) {
+    console.error('Error searching cities:', error);
+    return [];
+  }
 }
 
 export function getDefaultCities(): TimezoneInfo[] {
@@ -400,34 +491,58 @@ export function formatTimeWithOptions(
     dateFormat?: 'short' | 'medium' | 'long';
   } = {}
 ): string {
-  const { 
-    format = '24h', 
-    showSeconds = false, 
-    showDate = false, 
-    dateFormat = 'short' 
-  } = options;
-  
-  let timeFormat = format === '12h' ? 'h:mm' : 'HH:mm';
-  if (showSeconds) {
-    timeFormat += ':ss';
+  try {
+    if (!timezone || typeof timezone !== 'string') {
+      throw new Error('Invalid timezone provided');
+    }
+
+    const { 
+      format = '24h', 
+      showSeconds = false, 
+      showDate = false, 
+      dateFormat = 'short' 
+    } = options;
+    
+    // Validate options
+    if (!['12h', '24h'].includes(format)) {
+      console.warn(`Invalid format "${format}", defaulting to 24h`);
+    }
+    if (!['short', 'medium', 'long'].includes(dateFormat)) {
+      console.warn(`Invalid dateFormat "${dateFormat}", defaulting to short`);
+    }
+    
+    let timeFormat = format === '12h' ? 'h:mm' : 'HH:mm';
+    if (showSeconds) {
+      timeFormat += ':ss';
+    }
+    if (format === '12h') {
+      timeFormat += ' a';
+    }
+    
+    let result = formatTimeInTimezone(timezone, timeFormat);
+    
+    if (showDate) {
+      const dateFormats = {
+        short: 'MMM dd',
+        medium: 'MMM dd, yyyy',
+        long: 'EEEE, MMMM dd, yyyy'
+      };
+      const validDateFormat = ['short', 'medium', 'long'].includes(dateFormat) ? dateFormat : 'short';
+      const dateStr = formatTimeInTimezone(timezone, dateFormats[validDateFormat]);
+      result = `${result} • ${dateStr}`;
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error formatting time with options:', error);
+    // Safe fallback
+    try {
+      return new Date().toLocaleTimeString();
+    } catch (fallbackError) {
+      console.error('Fallback time formatting failed:', fallbackError);
+      return '00:00';
+    }
   }
-  if (format === '12h') {
-    timeFormat += ' a';
-  }
-  
-  let result = formatTimeInTimezone(timezone, timeFormat);
-  
-  if (showDate) {
-    const dateFormats = {
-      short: 'MMM dd',
-      medium: 'MMM dd, yyyy',
-      long: 'EEEE, MMMM dd, yyyy'
-    };
-    const dateStr = formatTimeInTimezone(timezone, dateFormats[dateFormat]);
-    result = `${result} • ${dateStr}`;
-  }
-  
-  return result;
 }
 
 export function getWeekendDays(timezone: string): number[] {
@@ -466,9 +581,33 @@ export function convertTimeToTimezone(
   sourceTimezone: string,
   targetTimezone: string
 ): Date {
-  // Convert source time to UTC, then to target timezone
-  const utcTime = zonedTimeToUtc(sourceTime, sourceTimezone);
-  return toZonedTime(utcTime, targetTimezone);
+  try {
+    // Validate inputs
+    if (!sourceTime || !(sourceTime instanceof Date) || isNaN(sourceTime.getTime())) {
+      throw new Error('Invalid source time provided');
+    }
+    if (!sourceTimezone || typeof sourceTimezone !== 'string') {
+      throw new Error('Invalid source timezone provided');
+    }
+    if (!targetTimezone || typeof targetTimezone !== 'string') {
+      throw new Error('Invalid target timezone provided');
+    }
+
+    // Convert source time to UTC, then to target timezone
+    const utcTime = zonedTimeToUtc(sourceTime, sourceTimezone);
+    const result = toZonedTime(utcTime, targetTimezone);
+    
+    // Validate result
+    if (!result || isNaN(result.getTime())) {
+      throw new Error('Invalid conversion result');
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error converting time between timezones:', error);
+    // Return source time as fallback
+    return sourceTime instanceof Date && !isNaN(sourceTime.getTime()) ? sourceTime : new Date();
+  }
 }
 
 export function generateTimeSlots(

@@ -162,7 +162,17 @@ export function WorldClockSettings({
                       </Label>
                       <Select 
                         value={localPreferences.timeFormat} 
-                        onValueChange={(value: '12h' | '24h') => handlePreferenceChange('timeFormat', value)}
+                        onValueChange={(value: '12h' | '24h') => {
+                          try {
+                            if (['12h', '24h'].includes(value)) {
+                              handlePreferenceChange('timeFormat', value);
+                            } else {
+                              console.warn('Invalid timeFormat value:', value);
+                            }
+                          } catch (error) {
+                            console.error('Error changing time format:', error);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -180,7 +190,17 @@ export function WorldClockSettings({
                       </Label>
                       <Select 
                         value={localPreferences.dateFormat} 
-                        onValueChange={(value: 'short' | 'medium' | 'long') => handlePreferenceChange('dateFormat', value)}
+                        onValueChange={(value: 'short' | 'medium' | 'long') => {
+                          try {
+                            if (['short', 'medium', 'long'].includes(value)) {
+                              handlePreferenceChange('dateFormat', value);
+                            } else {
+                              console.warn('Invalid dateFormat value:', value);
+                            }
+                          } catch (error) {
+                            console.error('Error changing date format:', error);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -202,7 +222,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.showSeconds}
-                        onCheckedChange={(checked) => handlePreferenceChange('showSeconds', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('showSeconds', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing show seconds:', error);
+                          }
+                        }}
                       />
                     </div>
 
@@ -213,7 +239,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.showEnhancedInfo}
-                        onCheckedChange={(checked) => handlePreferenceChange('showEnhancedInfo', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('showEnhancedInfo', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing show enhanced info:', error);
+                          }
+                        }}
                       />
                     </div>
 
@@ -224,7 +256,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.showUTCTime}
-                        onCheckedChange={(checked) => handlePreferenceChange('showUTCTime', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('showUTCTime', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing show UTC time:', error);
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -241,7 +279,17 @@ export function WorldClockSettings({
                       </Label>
                       <Select 
                         value={localPreferences.sortBy} 
-                        onValueChange={(value: 'name' | 'timezone' | 'time' | 'custom') => handlePreferenceChange('sortBy', value)}
+                        onValueChange={(value: 'name' | 'timezone' | 'time' | 'custom') => {
+                          try {
+                            if (['name', 'timezone', 'time', 'custom'].includes(value)) {
+                              handlePreferenceChange('sortBy', value);
+                            } else {
+                              console.warn('Invalid sortBy value:', value);
+                            }
+                          } catch (error) {
+                            console.error('Error changing sort by:', error);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -261,7 +309,18 @@ export function WorldClockSettings({
                       </Label>
                       <Select 
                         value={localPreferences.refreshInterval.toString()} 
-                        onValueChange={(value) => handlePreferenceChange('refreshInterval', parseInt(value))}
+                        onValueChange={(value) => {
+                          try {
+                            const numValue = parseInt(value);
+                            if (!isNaN(numValue) && numValue >= 1 && numValue <= 60) {
+                              handlePreferenceChange('refreshInterval', numValue);
+                            } else {
+                              console.warn('Invalid refreshInterval value:', value);
+                            }
+                          } catch (error) {
+                            console.error('Error changing refresh interval:', error);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -284,7 +343,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.compactView}
-                        onCheckedChange={(checked) => handlePreferenceChange('compactView', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('compactView', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing compact view:', error);
+                          }
+                        }}
                       />
                     </div>
 
@@ -295,7 +360,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.groupByRegion}
-                        onCheckedChange={(checked) => handlePreferenceChange('groupByRegion', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('groupByRegion', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing group by region:', error);
+                          }
+                        }}
                       />
                     </div>
 
@@ -306,7 +377,13 @@ export function WorldClockSettings({
                       </div>
                       <Switch
                         checked={localPreferences.autoRefresh}
-                        onCheckedChange={(checked) => handlePreferenceChange('autoRefresh', checked)}
+                        onCheckedChange={(checked) => {
+                          try {
+                            handlePreferenceChange('autoRefresh', Boolean(checked));
+                          } catch (error) {
+                            console.error('Error changing auto refresh:', error);
+                          }
+                        }}
                       />
                     </div>
                   </div>

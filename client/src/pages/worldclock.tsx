@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, Plus, Sun, Moon, MapPin, Settings, Timer, Clock } from 'lucide-react';
+import { Globe, Plus, Sun, Moon, MapPin, Settings, Timer, Clock, Users } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { WorldClockCard, CompactWorldClockCard } from '@/components/features/worldclock/WorldClockCard';
