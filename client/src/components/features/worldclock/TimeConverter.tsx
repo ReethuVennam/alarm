@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Clock, Globe, Swap, Calendar, Sunrise, Sunset, Timer } from 'lucide-react';
+import { ArrowRight, Clock, Globe, RotateCcw, Calendar, Sunrise, Sunset, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -428,7 +428,7 @@ export function TimeConverter({
                         disabled={!sourceTimezone || !targetTimezone}
                         className="flex items-center space-x-2"
                       >
-                        <Swap className="w-4 h-4" />
+                        <RotateCcw className="w-4 h-4" />
                         <span>Swap</span>
                       </Button>
                     </div>
@@ -616,7 +616,7 @@ export function TimeConverter({
                           </div>
                         );
                       }
-                    })
+                    })}
                   </div>
                 </CardLayout>
               )}

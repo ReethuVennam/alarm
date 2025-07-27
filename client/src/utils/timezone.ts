@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { zonedTimeToUtc, toZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export interface TimezoneInfo {
   id: string;
@@ -594,7 +594,7 @@ export function convertTimeToTimezone(
     }
 
     // Convert source time to UTC, then to target timezone
-    const utcTime = zonedTimeToUtc(sourceTime, sourceTimezone);
+    const utcTime = fromZonedTime(sourceTime, sourceTimezone);
     const result = toZonedTime(utcTime, targetTimezone);
     
     // Validate result
