@@ -336,33 +336,6 @@ export function calculateTimeDifference(timezone1: string, timezone2: string): n
   return (time1.getTime() - time2.getTime()) / (1000 * 60 * 60); // Hours difference
 }
 
-export function findOptimalMeetingTime(timezones: string[], startHour: number = 9, endHour: number = 17): Date | null {
-  const now = new Date();
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  tomorrow.setHours(0, 0, 0, 0);
-  
-  // Try each hour of the day
-  for (let hour = 0; hour < 24; hour++) {
-    const testTime = new Date(tomorrow.getTime() + hour * 60 * 60 * 1000);
-    
-    let allInBusinessHours = true;
-    for (const timezone of timezones) {
-      const localTime = toZonedTime(testTime, timezone);
-      const localHour = localTime.getHours();
-      
-      if (localHour < startHour || localHour > endHour) {
-        allInBusinessHours = false;
-        break;
-      }
-    }
-    
-    if (allInBusinessHours) {
-      return testTime;
-    }
-  }
-  
-  return null; // No optimal time found
-}
 
 export function getBusinessHoursStatus(timezone: string): 'business' | 'early' | 'late' | 'weekend' {
   const time = getCurrentTimeInTimezone(timezone);
@@ -402,4 +375,127 @@ export function formatRelativeTime(timezone: string, referenceTimezone: string =
   }
   
   return diff > 0 ? `+${timeStr}` : `-${timeStr}`;
+}
+
+// Enhanced time zone utilities
+export function getSunriseSunset(timezone: string, date: Date = new Date()): { sunrise: Date; sunset: Date } {
+  // Simplified sunrise/sunset calculation (6 AM / 6 PM)
+  // In a real app, you'd use a proper solar calculation library
+  const localDate = toZonedTime(date, timezone);
+  const sunrise = new Date(localDate);
+  const sunset = new Date(localDate);
+  
+  sunrise.setHours(6, 0, 0, 0);
+  sunset.setHours(18, 0, 0, 0);
+  
+  return { sunrise, sunset };
+}
+
+export function formatTimeWithOptions(
+  timezone: string, 
+  options: {
+    format?: '12h' | '24h';
+    showSeconds?: boolean;
+    showDate?: boolean;
+    dateFormat?: 'short' | 'medium' | 'long';
+  } = {}
+): string {
+  const { 
+    format = '24h', 
+    showSeconds = false, 
+    showDate = false, 
+    dateFormat = 'short' 
+  } = options;
+  
+  let timeFormat = format === '12h' ? 'h:mm' : 'HH:mm';
+  if (showSeconds) {
+    timeFormat += ':ss';
+  }
+  if (format === '12h') {
+    timeFormat += ' a';
+  }
+  
+  let result = formatTimeInTimezone(timezone, timeFormat);
+  
+  if (showDate) {
+    const dateFormats = {
+      short: 'MMM dd',
+      medium: 'MMM dd, yyyy',
+      long: 'EEEE, MMMM dd, yyyy'
+    };
+    const dateStr = formatTimeInTimezone(timezone, dateFormats[dateFormat]);
+    result = `${result} • ${dateStr}`;
+  }
+  
+  return result;
+}
+
+export function getWeekendDays(timezone: string): number[] {
+  // Most countries: Saturday (6) and Sunday (0)
+  // Middle East: Friday (5) and Saturday (6)
+  // Israel: Friday evening to Saturday evening
+  
+  // Simplified - just return Saturday and Sunday for now
+  return [0, 6];
+}
+
+export function isWeekend(timezone: string, date: Date = new Date()): boolean {
+  const localTime = toZonedTime(date, timezone);
+  const dayOfWeek = localTime.getDay();
+  const weekendDays = getWeekendDays(timezone);
+  return weekendDays.includes(dayOfWeek);
+}
+
+export function getTimezoneAbbreviation(timezone: string, date: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'short'
+    });
+    
+    const parts = formatter.formatToParts(date);
+    const timeZoneName = parts.find(part => part.type === 'timeZoneName');
+    return timeZoneName?.value || timezone.split('/')[1]?.replace('_', ' ') || timezone;
+  } catch {
+    return timezone.split('/')[1]?.replace('_', ' ') || timezone;
+  }
+}
+
+export function convertTimeToTimezone(
+  sourceTime: Date,
+  sourceTimezone: string,
+  targetTimezone: string
+): Date {
+  // Convert source time to UTC, then to target timezone
+  const utcTime = zonedTimeToUtc(sourceTime, sourceTimezone);
+  return toZonedTime(utcTime, targetTimezone);
+}
+
+export function generateTimeSlots(
+  timezone: string,
+  startHour: number = 0,
+  endHour: number = 23,
+  interval: number = 1
+): Array<{ time: string; hour: number; isBusinessHours: boolean; isDaytime: boolean }> {
+  const slots = [];
+  const now = new Date();
+  
+  for (let hour = startHour; hour <= endHour; hour += interval) {
+    const testDate = new Date(now);
+    testDate.setHours(hour, 0, 0, 0);
+    
+    const zonedTime = toZonedTime(testDate, timezone);
+    const timeStr = format(zonedTime, 'HH:mm', { timeZone: timezone });
+    const businessStatus = getBusinessHoursStatus(timezone);
+    const isDaylight = isDaytime(timezone);
+    
+    slots.push({
+      time: timeStr,
+      hour,
+      isBusinessHours: businessStatus === 'business',
+      isDaytime: isDaylight
+    });
+  }
+  
+  return slots;
 }
