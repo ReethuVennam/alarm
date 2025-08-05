@@ -3,8 +3,7 @@ import { Edit2, Trash2, Clock, Play, Search, BellOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// Temporarily using localStorage version instead of API version
-import { useLocalStorageAlarms as useAlarms } from "@/hooks/useLocalStorageAlarms";
+import { useAlarmsAdapter as useAlarms } from "@/hooks/useAlarmsAdapter";
 import { formatTimeRemaining } from "@/lib/alarmUtils";
 import { useToast } from "@/hooks/use-toast";
 

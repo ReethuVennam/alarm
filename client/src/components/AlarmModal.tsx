@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, Clock, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-// Temporarily using localStorage version instead of API version
-import { useLocalStorageAlarms as useAlarms } from "@/hooks/useLocalStorageAlarms";
+import { useAlarmsAdapter as useAlarms } from "@/hooks/useAlarmsAdapter";
 import { audioManager } from "@/lib/audioManager";
 import { useToast } from "@/hooks/use-toast";
 

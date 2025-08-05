@@ -23,13 +23,19 @@ npm run db:push      # Push database schema changes using Drizzle Kit
 
 ### Full-Stack Structure
 - **Frontend**: React 18 + TypeScript + Vite (in `client/` directory)
-- **Backend**: Express.js + TypeScript (in `server/` directory)  
+- **Backend**: Express.js + TypeScript (in `server/` directory) OR Vercel serverless functions (in `api/` directory)
 - **Database**: PostgreSQL with Drizzle ORM (schema in `shared/`)
 - **Build System**: Vite for client, esbuild for server bundling
 
+### Deployment Flexibility
+The project supports two deployment approaches:
+- **Local/Traditional**: Express server with `npm run dev` for full-stack development
+- **Vercel**: Serverless functions in `api/` directory with static frontend deployment
+
 ### Key Directories
 - `client/src/` - React application source code
-- `server/` - Express API server and routes
+- `server/` - Express API server and routes (local development)
+- `api/` - Vercel serverless functions (production deployment)
 - `shared/` - Database schema and types shared between client/server
 - `dist/` - Production build output
 
@@ -84,11 +90,14 @@ Located in `client/src/lib/alarmUtils.ts`:
 - **Wouter** for lightweight client-side routing
 
 ### Key Frontend Features
+- **Multi-Feature App**: Integrated alarm, timer, stopwatch, and world clock functionality
 - **Real-time Countdown**: Live updates showing time remaining for active alarms
 - **Audio System**: Web Audio API with fallback to HTML5 Audio for alarm sounds
 - **Theme System**: Dark/light mode with persistent storage
-- **Search & Filtering**: Real-time alarm filtering by title, description, or time
+- **Search & Filtering**: Universal search across alarms, timers, and world clock locations
 - **Do Not Disturb Mode**: Temporary notification blocking with visual indicators
+- **Mobile-First Design**: Responsive layout with touch-friendly interactions
+- **Accessibility**: Screen reader support and keyboard navigation via Radix UI primitives
 
 ## Backend Architecture
 
@@ -111,8 +120,11 @@ Located in `client/src/lib/alarmUtils.ts`:
 - **Zod validation** for runtime type checking on API boundaries
 - **Drizzle ORM** provides compile-time type safety for database operations
 
-### Linting & Formatting
-No specific configuration found - add ESLint/Prettier if needed for code quality.
+### Code Quality
+- **TypeScript**: Strict mode enabled with comprehensive type checking
+- **Component Architecture**: Feature-based organization in `client/src/components/features/`
+- **Custom Hooks**: Centralized business logic in `client/src/hooks/`
+- **Utility Libraries**: Helper functions in `client/src/lib/` and `client/src/utils/`
 
 ## Development Workflow
 
@@ -131,6 +143,26 @@ No specific configuration found - add ESLint/Prettier if needed for code quality
 1. `npm run build` creates optimized client bundle and server bundle
 2. Client assets go to `dist/public/`, server bundle to `dist/index.js`
 3. `npm run start` serves the production build
+
+## Development Patterns
+
+### Component Organization
+- **Feature-based structure**: Components grouped by functionality in `client/src/components/features/`
+- **Shared UI components**: Reusable components in `client/src/components/ui/` (shadcn/ui)
+- **Layout components**: App structure components in `client/src/components/layout/`
+- **Page components**: Route-specific components in `client/src/pages/`
+
+### State Management Patterns
+- **Server state**: React Query for API data fetching and caching
+- **Client state**: React hooks and context for local component state
+- **Persistent state**: localStorage for theme preferences and settings
+- **Real-time updates**: Custom hooks with cleanup patterns for timers and alarms
+
+### Error Handling
+- **API errors**: Centralized error handling in React Query mutations
+- **Client errors**: ErrorBoundary component for component-level error catching
+- **Validation**: Zod schemas for both client and server-side validation
+- **User feedback**: Toast notifications for user actions and errors
 
 ## Key Implementation Details
 
@@ -159,10 +191,26 @@ Advanced parsing in `parseNaturalLanguage()` function handles:
 
 ### Required Environment Variables
 ```bash
-DATABASE_URL=postgresql://...     # Neon Database connection string
-NODE_ENV=development|production   # Environment mode
-PORT=5000                        # Server port (optional, defaults to 5000)
+# Storage Configuration
+VITE_USE_LOCALSTORAGE=true|false        # Use localStorage (true) or database (false)
+
+# Database Configuration (only required when VITE_USE_LOCALSTORAGE=false)
+DATABASE_URL=postgresql://...           # Neon Database connection string
+
+# Development settings
+NODE_ENV=development|production         # Environment mode
+PORT=5000                              # Server port (optional, defaults to 5000)
 ```
+
+### Storage Configuration
+The application supports two storage modes:
+- **localStorage Mode** (`VITE_USE_LOCALSTORAGE=true`): Stores all alarm data in browser localStorage
+- **Database Mode** (`VITE_USE_LOCALSTORAGE=false`): Stores alarm data in PostgreSQL database
+
+**To switch storage modes:**
+1. Update `VITE_USE_LOCALSTORAGE` in your `.env` file
+2. Restart the development server
+3. The `useAlarmsAdapter` hook will automatically use the appropriate storage method
 
 ### Replit-Specific Configuration
 The project includes Replit-specific development plugins in `vite.config.ts` for enhanced development experience on the Replit platform.

@@ -6,7 +6,7 @@ import { SkipLinks } from '../accessibility/FocusManager';
 import { ScreenReaderText } from '../accessibility/ScreenReaderText';
 import { UniversalSearch } from '../features/search/UniversalSearch';
 import { PageTransition } from '../ui/PageTransition';
-import { useLocalStorageAlarms as useAlarms } from '@/hooks/useLocalStorageAlarms';
+import { useAlarmsAdapter as useAlarms } from '@/hooks/useAlarmsAdapter';
 import { useTimers } from '@/hooks/useTimers';
 
 interface AppLayoutProps {

@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useAlarms } from "@/hooks/useAlarms";
+import { useAlarmsAdapter } from "@/hooks/useAlarmsAdapter";
 import { parseNaturalLanguage } from "@/lib/alarmUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,7 +33,7 @@ export function AlarmForm() {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const { createAlarm } = useAlarms();
+  const { createAlarm } = useAlarmsAdapter();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
