@@ -60,7 +60,7 @@ app.use((req, res, next) => {
   }
 
   // Load port from environment or fallback to 5000
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = parseInt(process.argv[2]?.split('=')[1] || process.env.PORT || "5000", 10);
 
   // Start the server
   server.listen(port, "127.0.0.1", () => {
