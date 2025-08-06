@@ -160,13 +160,7 @@ export function useLocalStorageAlarms() {
     },
     onSuccess: (deletedId: number) => {
       console.log('Alarm deleted successfully:', deletedId);
-      setAlarms(prev => 
-        prev.map(alarm => 
-          alarm.id === deletedId 
-            ? { ...alarm, isActive: false, updatedAt: new Date() }
-            : alarm
-        )
-      );
+      setAlarms(prev => prev.filter(alarm => alarm.id !== deletedId));
       queryClient.invalidateQueries({ queryKey: ["/api/alarms"] });
     },
   });
