@@ -6,7 +6,7 @@ import { SkipLinks } from '../accessibility/FocusManager';
 import { ScreenReaderText } from '../accessibility/ScreenReaderText';
 import { UniversalSearch } from '../features/search/UniversalSearch';
 import { PageTransition } from '../ui/PageTransition';
-import { useAlarmsAdapter as useAlarms } from '@/hooks/useAlarmsAdapter';
+import { useAlarmsContext } from '@/hooks/AlarmsContext';
 import { useTimers } from '@/hooks/useTimers';
 
 interface AppLayoutProps {
@@ -18,7 +18,7 @@ interface AppLayoutProps {
  * Main app layout with mobile-first navigation and accessibility features
  */
 export function AppLayout({ children, className = '' }: AppLayoutProps) {
-  const { alarms } = useAlarms();
+  const { alarms } = useAlarmsContext();
   const { activeTimers } = useTimers();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showMenu, setShowMenu] = useState(false);

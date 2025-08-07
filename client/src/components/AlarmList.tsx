@@ -3,12 +3,14 @@ import { Edit2, Trash2, Clock, Play, Search, BellOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAlarmsAdapter as useAlarms } from "@/hooks/useAlarmsAdapter";
-import { formatTimeRemaining } from "@/lib/alarmUtils";
+import { useAlarmsContext } from "@/hooks/AlarmsContext";
 import { useToast } from "@/hooks/use-toast";
+import { formatTimeRemaining } from "@/lib/alarmUtils";
+
+import type { Alarm } from "@shared/schema";
 
 export function AlarmList() {
-  const { alarms, deleteAlarm } = useAlarms();
+  const { alarms, deleteAlarm } = useAlarmsContext();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,7 +19,6 @@ export function AlarmList() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
-      
       // Check DND status
       const storedDndEndTime = localStorage.getItem('dndEndTime');
       if (storedDndEndTime) {
@@ -32,7 +33,6 @@ export function AlarmList() {
         setDndEndTime(null);
       }
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -81,7 +81,7 @@ export function AlarmList() {
   };
 
   // Filter alarms based on search query
-  const filteredAlarms = alarms.filter(alarm => {
+  const filteredAlarms = alarms.filter((alarm: Alarm) => {
     const searchLower = searchQuery.toLowerCase();
     return alarm.title.toLowerCase().includes(searchLower) ||
            (alarm.description && alarm.description.toLowerCase().includes(searchLower)) ||
@@ -118,8 +118,10 @@ export function AlarmList() {
               <p className="text-sm mt-1">Create your first alarm to get started!</p>
             </div>
           ) : (
-            filteredAlarms.map((alarm) => {
-              const isBlocked = isAlarmBlockedByDND(alarm.triggerTime);
+            filteredAlarms.map((alarm: Alarm) => {
+              // Ensure alarm.triggerTime is a string for isAlarmBlockedByDND
+              const triggerTimeStr = typeof alarm.triggerTime === 'string' ? alarm.triggerTime : alarm.triggerTime.toISOString();
+              const isBlocked = isAlarmBlockedByDND(triggerTimeStr);
               return (
                 <div
                   key={alarm.id}
@@ -160,10 +162,13 @@ export function AlarmList() {
                     )}
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       {getRepeatDisplay(alarm.repeatType, alarm.repeatValue)} at{" "}
-                      {new Date(alarm.triggerTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {(() => {
+                        const dateObj = typeof alarm.triggerTime === 'string' ? new Date(alarm.triggerTime) : alarm.triggerTime;
+                        return dateObj.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        });
+                      })()}
                     </p>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -174,7 +179,7 @@ export function AlarmList() {
                 <div className="mb-3">
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Next trigger:</div>
                   <div className="text-lg font-mono text-primary">
-                    {formatTimeRemaining(alarm.triggerTime, currentTime)}
+                    {formatTimeRemaining(alarm.triggerTime)}
                   </div>
                 </div>
                 
@@ -214,5 +219,7 @@ export function AlarmList() {
         </div>
       </CardContent>
     </Card>
+
   );
+
 }

@@ -13,51 +13,54 @@ import Settings from "@/pages/settings";
 import QRCode from "@/pages/qr-code";
 import TestAlarms from "@/pages/test-alarms";
 import NotFound from "@/pages/not-found";
+import { AlarmsProvider } from "@/hooks/AlarmsContext";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => (
+      <Route path="/">
         <ErrorBoundary>
           <Home />
         </ErrorBoundary>
-      )} />
-      <Route path="/home" component={() => (
+      </Route>
+      <Route path="/home">
         <ErrorBoundary>
           <Home />
         </ErrorBoundary>
-      )} />
-      <Route path="/timer" component={() => (
+      </Route>
+      <Route path="/timer">
         <ErrorBoundary>
           <Timer />
         </ErrorBoundary>
-      )} />
-      <Route path="/stopwatch" component={() => (
+      </Route>
+      <Route path="/stopwatch">
         <ErrorBoundary>
           <Stopwatch />
         </ErrorBoundary>
-      )} />
-      <Route path="/worldclock" component={() => (
+      </Route>
+      <Route path="/worldclock">
         <ErrorBoundary>
           <WorldClock />
         </ErrorBoundary>
-      )} />
-      <Route path="/settings" component={() => (
+      </Route>
+      <Route path="/settings">
         <ErrorBoundary>
           <Settings />
         </ErrorBoundary>
-      )} />
-      <Route path="/qr" component={() => (
+      </Route>
+      <Route path="/qr">
         <ErrorBoundary>
           <QRCode />
         </ErrorBoundary>
-      )} />
-      <Route path="/test" component={() => (
+      </Route>
+      <Route path="/test">
         <ErrorBoundary>
           <TestAlarms />
         </ErrorBoundary>
-      )} />
-      <Route component={NotFound} />
+      </Route>
+      <Route>
+        <NotFound />
+      </Route>
     </Switch>
   );
 }
@@ -68,8 +71,10 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <TooltipProvider>
-            <Toaster />
-            <Router />
+            <AlarmsProvider>
+              <Toaster />
+              <Router />
+            </AlarmsProvider>
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>

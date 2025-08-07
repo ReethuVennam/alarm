@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useAlarmsAdapter } from "@/hooks/useAlarmsAdapter";
+import { useAlarmsContext } from "@/hooks/AlarmsContext";
 import { parseNaturalLanguage } from "@/lib/alarmUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -33,7 +33,7 @@ export function AlarmForm() {
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const { createAlarm } = useAlarmsAdapter();
+  const { createAlarm, refetch } = useAlarmsContext();
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -64,7 +64,7 @@ export function AlarmForm() {
         const transcript = event.results[0][0].transcript;
         setNaturalInput(transcript);
         setIsListening(false);
-        
+
         // Auto-parse and create alarm after voice input
         const parsed = parseNaturalLanguage(transcript);
         if (parsed) {
@@ -73,31 +73,33 @@ export function AlarmForm() {
             activateDoNotDisturb(parsed.amount, parsed.unit);
             return;
           }
-          
+
           setParsedResult(parsed.summary);
-          
-          // Convert triggerTime to date and time strings for the form
-          const triggerTime = new Date(parsed.triggerTime);
-          const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
-          const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
-          
-          form.setValue("title", parsed.title);
-          form.setValue("description", parsed.description || "");
-          form.setValue("date", dateString);
-          form.setValue("time", timeString);
-          form.setValue("repeatType", parsed.repeatType);
-          form.setValue("repeatValue", parsed.repeatValue || "");
-          
-          // Auto-submit the form after successful voice recognition
-          toast({
-            title: "Creating alarm...",
-            description: parsed.summary,
-          });
-          
-          // Wait a moment for form values to update, then submit
-          setTimeout(() => {
-            form.handleSubmit(onSubmit)();
-          }, 200);
+
+          // Only access alarm fields if not DND
+          if ('triggerTime' in parsed) {
+            const triggerTime = new Date(parsed.triggerTime);
+            const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+            const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
+
+            form.setValue("title", parsed.title);
+            form.setValue("description", parsed.description || "");
+            form.setValue("date", dateString);
+            form.setValue("time", timeString);
+            form.setValue("repeatType", parsed.repeatType);
+            form.setValue("repeatValue", parsed.repeatValue || "");
+
+            // Auto-submit the form after successful voice recognition
+            toast({
+              title: "Creating alarm...",
+              description: parsed.summary,
+            });
+
+            // Wait a moment for form values to update, then submit
+            setTimeout(() => {
+              form.handleSubmit(onSubmit)();
+            }, 200);
+          }
         } else {
           toast({
             title: "Could not understand",
@@ -187,20 +189,22 @@ export function AlarmForm() {
         setNaturalInput("");
         return;
       }
-      
+
       setParsedResult(parsed.summary);
-      
-      // Convert triggerTime to date and time strings for the form
-      const triggerTime = new Date(parsed.triggerTime);
-      const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
-      const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
-      
-      form.setValue("title", parsed.title);
-      form.setValue("description", parsed.description || "");
-      form.setValue("date", dateString);
-      form.setValue("time", timeString);
-      form.setValue("repeatType", parsed.repeatType);
-      form.setValue("repeatValue", parsed.repeatValue || "");
+
+      // Only access alarm fields if not DND
+      if ('triggerTime' in parsed) {
+        const triggerTime = new Date(parsed.triggerTime);
+        const dateString = triggerTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const timeString = triggerTime.toTimeString().slice(0, 5); // HH:MM format
+
+        form.setValue("title", parsed.title);
+        form.setValue("description", parsed.description || "");
+        form.setValue("date", dateString);
+        form.setValue("time", timeString);
+        form.setValue("repeatType", parsed.repeatType);
+        form.setValue("repeatValue", parsed.repeatValue || "");
+      }
     } else {
       toast({
         title: "Parse Error",
@@ -235,6 +239,11 @@ export function AlarmForm() {
       });
       
       console.log('Alarm created successfully:', result);
+
+      // Refetch alarms to update the list immediately
+      if (typeof refetch === 'function') {
+        await refetch();
+      }
 
       toast({
         title: "Success",

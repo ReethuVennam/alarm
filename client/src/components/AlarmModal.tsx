@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Bell, Clock, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useAlarmsAdapter as useAlarms } from "@/hooks/useAlarmsAdapter";
+import { useAlarmsContext } from "@/hooks/AlarmsContext";
 import { audioManager } from "@/lib/audioManager";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,7 +16,7 @@ interface TriggeredAlarm {
 export function AlarmModal() {
   const [triggeredAlarm, setTriggeredAlarm] = useState<TriggeredAlarm | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const { alarms, deleteAlarm, updateAlarm } = useAlarms();
+  const { alarms, deleteAlarm, updateAlarm } = useAlarmsContext();
   const { toast } = useToast();
 
   useEffect(() => {
