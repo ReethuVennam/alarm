@@ -1,0 +1,5 @@
+/* Makes Switch and its handle larger when .large-text is on the body */
+.large-text .switch, .large-text .ui-switch, .large-text [data-slot='switch'] {
+  transform: scale(1.25);
+  transition: transform 0.2s;
+}

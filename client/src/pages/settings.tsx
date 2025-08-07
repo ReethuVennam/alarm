@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import '../styles/large-text-switch.css';
 import { Settings, Bell, Palette, Volume2, Shield, Info } from 'lucide-react';
 import { AppLayout, PageLayout, CardLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -6,8 +8,35 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTheme, accentColors } from '@/components/ThemeProvider';
 
+// Add the following CSS to your global stylesheet (e.g., index.css):
+// .large-text { font-size: 1.25em !important; }
+
 export default function SettingsPage() {
   const { theme, accent, setTheme, setAccent } = useTheme();
+  const validThemes = ["light", "dark", "auto"];
+  const safeTheme = validThemes.includes(theme) ? theme : "light";
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  // Large Text state, initialized from localStorage
+  const [largeText, setLargeText] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('large-text') === '1';
+    }
+    return false;
+  });
+
+  // Sync body class and localStorage when largeText changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (largeText) {
+        document.body.classList.add('large-text');
+        localStorage.setItem('large-text', '1');
+      } else {
+        document.body.classList.remove('large-text');
+        localStorage.removeItem('large-text');
+      }
+    }
+  }, [largeText]);
 
   return (
     <AppLayout>
@@ -30,7 +59,7 @@ export default function SettingsPage() {
                     Choose your preferred theme or use auto-switching
                   </p>
                 </div>
-                <Select value={theme} onValueChange={setTheme}>
+                <Select value={safeTheme} onValueChange={setTheme}>
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
@@ -155,7 +184,10 @@ export default function SettingsPage() {
                     Use larger font sizes throughout the app
                   </p>
                 </div>
-                <Switch />
+                <Switch
+                  checked={largeText}
+                  onCheckedChange={setLargeText}
+                />
               </div>
             </div>
           </CardLayout>
@@ -180,10 +212,41 @@ export default function SettingsPage() {
               </div>
 
               <div className="pt-4 space-y-2">
-                <Button variant="outline" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    try {
+                      const data = { ...localStorage };
+                      const json = JSON.stringify(data, null, 2);
+                      const blob = new Blob([json], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'bytelyst-app-data.json';
+                      document.body.appendChild(a);
+                      a.click();
+                      setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                      }, 100);
+                    } catch (e) {
+                      alert('Failed to export data.');
+                    }
+                  }}
+                >
                   Export Data
                 </Button>
-                <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-red-600 hover:text-red-700"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to clear all app data? This cannot be undone.')) {
+                      localStorage.clear();
+                      window.location.reload();
+                    }
+                  }}
+                >
                   Clear All Data
                 </Button>
               </div>
@@ -206,11 +269,11 @@ export default function SettingsPage() {
               </div>
               
               <div className="pt-4 space-y-2">
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" onClick={() => setShowPrivacy(true)}>
                   <Info className="w-4 h-4 mr-2" />
                   Privacy Policy
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" onClick={() => setShowTerms(true)}>
                   <Info className="w-4 h-4 mr-2" />
                   Terms of Service
                 </Button>
@@ -219,6 +282,47 @@ export default function SettingsPage() {
           </CardLayout>
         </div>
       </PageLayout>
+    {/* Terms and Conditions Modal */}
+    {showPrivacy && ReactDOM.createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+          <h2 className="text-xl font-bold mb-4">Privacy Policy</h2>
+          <div className="max-h-72 overflow-y-auto text-gray-800 dark:text-gray-200 mb-4">
+            <p>Your privacy is important to us. This app does not collect or transmit any personal data to external servers.</p>
+            <ul className="list-disc ml-6 mt-2">
+              <li>All alarm and timer data is stored locally on your device.</li>
+              <li>We do not track your usage or share your information with third parties.</li>
+              <li>Notifications and permissions are only used to provide app functionality.</li>
+              <li>You may clear your data at any time from the settings menu.</li>
+              <li>By using this app, you consent to this privacy policy.</li>
+            </ul>
+            <p className="mt-3">For questions, contact the app developer.</p>
+          </div>
+          <Button variant="outline" onClick={() => setShowPrivacy(false)} className="absolute right-4 bottom-4">Close</Button>
+        </div>
+      </div>,
+      document.body
+    )}
+    {showTerms && ReactDOM.createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+          <h2 className="text-xl font-bold mb-4">Terms and Conditions</h2>
+          <div className="max-h-72 overflow-y-auto text-gray-800 dark:text-gray-200 mb-4">
+            <p>Welcome to our app! By using this application, you agree to the following terms and conditions:</p>
+            <ul className="list-disc ml-6 mt-2">
+              <li>You will use the app for lawful purposes only.</li>
+              <li>Your data may be stored locally on your device.</li>
+              <li>We are not responsible for any loss of data or missed alarms.</li>
+              <li>Features may change or be removed at any time.</li>
+              <li>By continuing to use the app, you accept these terms.</li>
+            </ul>
+            <p className="mt-3">If you do not agree with these terms, please discontinue use of the app.</p>
+          </div>
+          <Button variant="outline" onClick={() => setShowTerms(false)} className="absolute right-4 bottom-4">Close</Button>
+        </div>
+      </div>,
+      document.body
+    )}
     </AppLayout>
   );
 }

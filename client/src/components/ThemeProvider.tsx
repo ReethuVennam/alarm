@@ -68,11 +68,37 @@ export function ThemeProvider({
   defaultAccent = "neon",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) || defaultTheme
+    () => {
+      try {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+        if (stored && ["light", "dark", "auto"].includes(stored)) {
+          return stored as Theme;
+        }
+      } catch (e) {
+        // Ignore and use default
+      }
+      if (["light", "dark", "auto"].includes(defaultTheme)) {
+        return defaultTheme;
+      }
+      return "light";
+    }
   );
   
   const [accent, setAccentState] = useState<ThemeAccent>(
-    () => (localStorage.getItem("theme-accent") as ThemeAccent) || defaultAccent
+    () => {
+      try {
+        const stored = typeof window !== "undefined" ? localStorage.getItem("theme-accent") : null;
+        if (stored && ["neon", "purple", "electric", "sunset", "ocean"].includes(stored)) {
+          return stored as ThemeAccent;
+        }
+      } catch (e) {
+        // Ignore and use default
+      }
+      if (["neon", "purple", "electric", "sunset", "ocean"].includes(defaultAccent)) {
+        return defaultAccent;
+      }
+      return "neon";
+    }
   );
 
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
@@ -100,34 +126,36 @@ export function ThemeProvider({
 
   // Apply theme and accent colors to CSS variables
   const applyTheme = (resolvedTheme: ResolvedTheme, accent: ThemeAccent) => {
-    const root = window.document.documentElement;
-    const accentConfig = accentColors[accent];
-    
-    // Remove existing theme classes
-    root.classList.remove("light", "dark");
-    root.classList.add(resolvedTheme);
-    
-    // Apply accent colors as CSS custom properties
-    root.style.setProperty('--accent-primary', accentConfig.primary);
-    root.style.setProperty('--accent-secondary', accentConfig.secondary);
-    root.style.setProperty('--accent-gradient', accentConfig.gradient);
-    
-    // GenZ Dark Mode - True black for OLED screens
-    if (resolvedTheme === 'dark') {
-      root.style.setProperty('--background-primary', '#0a0a0a');
-      root.style.setProperty('--background-secondary', '#1a1a1a');
-      root.style.setProperty('--background-tertiary', '#2a2a2a');
-      root.style.setProperty('--text-primary', '#ffffff');
-      root.style.setProperty('--text-secondary', '#a0a0a0');
-      root.style.setProperty('--border-color', '#333333');
-    } else {
-      // Light mode with high contrast
-      root.style.setProperty('--background-primary', '#ffffff');
-      root.style.setProperty('--background-secondary', '#f8fafc');
-      root.style.setProperty('--background-tertiary', '#e2e8f0');
-      root.style.setProperty('--text-primary', '#0f172a');
-      root.style.setProperty('--text-secondary', '#475569');
-      root.style.setProperty('--border-color', '#e2e8f0');
+    try {
+      if (typeof window === "undefined" || !window.document) return;
+      const root = window.document.documentElement;
+      const accentConfig = accentColors[accent];
+      // Remove existing theme classes
+      root.classList.remove("light", "dark");
+      root.classList.add(resolvedTheme);
+      // Apply accent colors as CSS custom properties
+      root.style.setProperty('--accent-primary', accentConfig.primary);
+      root.style.setProperty('--accent-secondary', accentConfig.secondary);
+      root.style.setProperty('--accent-gradient', accentConfig.gradient);
+      // GenZ Dark Mode - True black for OLED screens
+      if (resolvedTheme === 'dark') {
+        root.style.setProperty('--background-primary', '#0a0a0a');
+        root.style.setProperty('--background-secondary', '#1a1a1a');
+        root.style.setProperty('--background-tertiary', '#2a2a2a');
+        root.style.setProperty('--text-primary', '#ffffff');
+        root.style.setProperty('--text-secondary', '#a0a0a0');
+        root.style.setProperty('--border-color', '#333333');
+      } else {
+        // Light mode with high contrast
+        root.style.setProperty('--background-primary', '#ffffff');
+        root.style.setProperty('--background-secondary', '#f8fafc');
+        root.style.setProperty('--background-tertiary', '#e2e8f0');
+        root.style.setProperty('--text-primary', '#0f172a');
+        root.style.setProperty('--text-secondary', '#475569');
+        root.style.setProperty('--border-color', '#e2e8f0');
+      }
+    } catch (e) {
+      // Ignore errors in non-browser environments
     }
   };
 
@@ -168,14 +196,26 @@ export function ThemeProvider({
     return () => clearInterval(interval);
   }, [theme, resolvedTheme, accent]);
 
+
   const setTheme = (newTheme: Theme) => {
-    localStorage.setItem("theme", newTheme);
-    setThemeState(newTheme);
+    const safeTheme: Theme = ["light", "dark", "auto"].includes(newTheme) ? newTheme : "light";
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme", safeTheme);
+      }
+    } catch (e) {}
+    setThemeState(safeTheme);
   };
 
+
   const setAccent = (newAccent: ThemeAccent) => {
-    localStorage.setItem("theme-accent", newAccent);
-    setAccentState(newAccent);
+    const safeAccent: ThemeAccent = ["neon", "purple", "electric", "sunset", "ocean"].includes(newAccent) ? newAccent : "neon";
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme-accent", safeAccent);
+      }
+    } catch (e) {}
+    setAccentState(safeAccent);
   };
 
   const toggleTheme = () => {
@@ -188,14 +228,21 @@ export function ThemeProvider({
     }
   };
 
+
+  // Always force valid theme/accent for context consumers
+  const validThemes = ["light", "dark", "auto"];
+  const validAccents = ["neon", "purple", "electric", "sunset", "ocean"];
+  const safeTheme: Theme = validThemes.includes(theme) ? theme : "light";
+  const safeAccent: ThemeAccent = validAccents.includes(accent) ? accent : "neon";
+
   const value = {
-    theme,
+    theme: safeTheme,
     resolvedTheme,
-    accent,
+    accent: safeAccent,
     setTheme,
     setAccent,
     toggleTheme,
-    isAutoMode: theme === "auto",
+    isAutoMode: safeTheme === "auto",
   };
 
   return (

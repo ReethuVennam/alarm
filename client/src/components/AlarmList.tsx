@@ -219,7 +219,5 @@ export function AlarmList() {
         </div>
       </CardContent>
     </Card>
-
   );
-
 }
